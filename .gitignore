@@ -1,0 +1,28 @@
+node_modules
+**/node_modules
+dist
+**/dist
+
+# env
+.env
+.env.local
+.env.*.local
+
+# logs
+*.log
+
+# OS
+.DS_Store
+
+# IDE
+.idea
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+
+# coverage
+coverage
+
+# temp
+.temp
+.tmp
