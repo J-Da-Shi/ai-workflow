@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
+import { WorkModule } from './modules/workbench/work.module';
 
 @Module({
   imports: [
@@ -13,17 +14,18 @@ import { AuthModule } from './modules/auth/auth.module';
       // inject ConfigService 来读取 .env 中的变量
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
-        type: 'postgres',
+        type: 'mysql',
         host: configService.get('DB_HOST'),
         port: configService.get('DB_PORT'),
         username: configService.get('DB_USERNAME'),
         password: configService.get('DB_PASSWORD'),
         database: configService.get('DB_DATABASE'),
         autoLoadEntities: true, // 自动加载所有 Entity，不用手动列
-        asynchronize: true, // 开发阶段自动同步表结构，生产环境要关掉
+        synchronize: true, // 开发阶段自动同步表结构，生产环境要关掉
       }),
     }),
     AuthModule,
+    WorkModule,
   ],
 })
 export class AppModule {}
