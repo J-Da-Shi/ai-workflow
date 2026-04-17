@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Dev Workflow - UI 原型</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; }
+
+    /* ===== Navigation ===== */
+    .nav { background: #1890ff; padding: 0 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; height: 48px; }
+    .nav a { color: #fff; text-decoration: none; padding: 6px 16px; border-radius: 4px; font-size: 14px; cursor: pointer; }
+    .nav a:hover, .nav a.active { background: rgba(255,255,255,0.2); }
+    .nav .title { font-size: 18px; font-weight: bold; color: #fff; margin-right: 24px; }
+    .nav-left { display: flex; align-items: center; gap: 4px; }
+    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
+    .nav-right:hover { background: rgba(255,255,255,0.2); }
+    .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; }
+    .nav-username { color: #fff; font-size: 13px; }
+
+    /* ===== Pages ===== */
+    .page { display: none; min-height: calc(100vh - 60px); }
+    .page.active { display: block; }
+
+    /* ===== Page 1: Login ===== */
+    .login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .login-card { background: #fff; border-radius: 12px; padding: 48px 40px; width: 420px; box-shadow: 0 8px 40px rgba(0,0,0,0.15); }
+    .login-card h1 { text-align: center; font-size: 24px; margin-bottom: 8px; color: #1890ff; }
+    .login-card .subtitle { text-align: center; color: #999; margin-bottom: 32px; font-size: 14px; }
+    .tabs { display: flex; border-bottom: 1px solid #e8e8e8; margin-bottom: 24px; }
+    .tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; color: #999; font-size: 15px; border-bottom: 2px solid transparent; }
+    .tab.active { color: #1890ff; border-bottom-color: #1890ff; }
+    .form-group { margin-bottom: 20px; }
+    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #666; }
+    .form-group input { width: 100%; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; outline: none; }
+    .form-group input:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+    .btn-primary { width: 100%; padding: 12px; background: #1890ff; color: #fff; border: none; border-radius: 6px; font-size: 15px; cursor: pointer; }
+    .btn-primary:hover { background: #40a9ff; }
+
+    /* ===== Page 2: Dashboard ===== */
+    .dashboard { padding: 24px; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .dashboard-header h2 { font-size: 22px; }
+    .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
+    .btn-blue { background: #1890ff; color: #fff; }
+    .btn-blue:hover { background: #40a9ff; }
+
+    .stats { display: flex; gap: 16px; margin-bottom: 24px; }
+    .stat-card { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .stat-card .number { font-size: 28px; font-weight: bold; color: #1890ff; }
+    .stat-card .label { font-size: 13px; color: #999; margin-top: 4px; }
+
+    .project-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .project-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; transition: box-shadow 0.2s; }
+    .project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    .project-card h3 { font-size: 16px; margin-bottom: 8px; }
+    .project-card .desc { font-size: 13px; color: #666; margin-bottom: 12px; }
+    .project-card .meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .tag-blue { background: #e6f7ff; color: #1890ff; }
+    .tag-green { background: #f6ffed; color: #52c41a; }
+    .tag-orange { background: #fff7e6; color: #fa8c16; }
+
+    /* ===== Page 3: Pipeline Canvas ===== */
+    .pipeline-page { display: flex; height: calc(100vh - 60px); overflow: hidden; }
+
+    /* 左侧节点面板 */
+    .node-panel { width: 220px; background: #fff; border-right: 1px solid #e8e8e8; display: flex; flex-direction: column; flex-shrink: 0; }
+    .node-panel-header { padding: 16px; border-bottom: 1px solid #e8e8e8; font-size: 14px; font-weight: 600; color: #333; }
+    .node-panel-list { padding: 12px; overflow-y: auto; flex: 1; }
+    .node-panel-group { margin-bottom: 16px; }
+    .node-panel-group-title { font-size: 12px; color: #999; margin-bottom: 8px; padding-left: 4px; }
+    .node-item { padding: 10px 12px; background: #fafafa; border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 8px; cursor: grab; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; user-select: none; }
+    .node-item:hover { border-color: #1890ff; background: #e6f7ff; }
+    .node-item:active { cursor: grabbing; }
+    .node-icon { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; flex-shrink: 0; }
+    .node-icon.blue { background: #1890ff; }
+    .node-icon.green { background: #52c41a; }
+    .node-icon.orange { background: #fa8c16; }
+    .node-icon.purple { background: #722ed1; }
+    .node-icon.red { background: #ff4d4f; }
+    .node-icon.cyan { background: #13c2c2; }
+
+    /* 右侧画布区域 */
+    .canvas-area { flex: 1; display: flex; flex-direction: column; background: #f7f8fa; }
+    .canvas-toolbar { padding: 12px 20px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
+    .canvas-toolbar-left { display: flex; align-items: center; gap: 12px; }
+    .canvas-toolbar-left h3 { font-size: 16px; margin: 0; }
+    .canvas-toolbar-right { display: flex; gap: 8px; }
+    .toolbar-btn { padding: 6px 14px; border: 1px solid #d9d9d9; border-radius: 4px; background: #fff; font-size: 13px; cursor: pointer; color: #333; }
+    .toolbar-btn:hover { border-color: #1890ff; color: #1890ff; }
+    .toolbar-btn.primary { background: #1890ff; color: #fff; border-color: #1890ff; }
+    .toolbar-btn.primary:hover { background: #40a9ff; }
+
+    /* 画布主体 */
+    .canvas-body { flex: 1; position: relative; overflow: auto; }
+    .canvas-grid { position: absolute; inset: 0; background-image: radial-gradient(circle, #d9d9d9 1px, transparent 1px); background-size: 20px 20px; }
+    .canvas-nodes { position: absolute; inset: 0; padding: 40px; }
+
+    /* 画布中的节点 */
+    .canvas-node { position: absolute; width: 180px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #d9d9d9; cursor: pointer; transition: box-shadow 0.2s; }
+    .canvas-node:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+    .canvas-node.pending { border-left-color: #d9d9d9; }
+    .canvas-node.running { border-left-color: #1890ff; }
+    .canvas-node.waiting { border-left-color: #faad14; }
+    .canvas-node.approved { border-left-color: #52c41a; }
+    .canvas-node.rejected { border-left-color: #ff4d4f; }
+    .canvas-node-header { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px; }
+    .canvas-node-icon { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #fff; }
+    .canvas-node-title { font-size: 13px; font-weight: 500; }
+    .canvas-node-body { padding: 10px 12px; }
+    .canvas-node-status { font-size: 12px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
+    .canvas-node-status.pending { background: #fafafa; color: #999; }
+    .canvas-node-status.running { background: #e6f7ff; color: #1890ff; }
+    .canvas-node-status.waiting { background: #fff7e6; color: #faad14; }
+    .canvas-node-status.approved { background: #f6ffed; color: #52c41a; }
+    .canvas-node-status.rejected { background: #fff1f0; color: #ff4d4f; }
+    .canvas-node-meta { font-size: 11px; color: #999; margin-top: 6px; }
+
+    /* 连接线 (SVG) */
+    .canvas-connections { position: absolute; inset: 0; pointer-events: none; }
+    .canvas-connections line { stroke: #c0c0c0; stroke-width: 2; }
+    .canvas-connections .arrow { fill: #c0c0c0; }
+    .conn-active line { stroke: #52c41a; stroke-width: 2; }
+    .conn-active .arrow { fill: #52c41a; }
+    .conn-waiting line { stroke: #faad14; stroke-width: 2; stroke-dasharray: 6,4; }
+    .conn-waiting .arrow { fill: #faad14; }
+
+    /* 抽屉遮罩层 */
+    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 300; }
+    .drawer-overlay.open { display: block; }
+
+    /* 右侧抽屉 */
+    .node-drawer { position: fixed; top: 0; right: -520px; width: 520px; height: 100vh; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.12); z-index: 301; transition: right 0.3s ease; display: flex; flex-direction: column; }
+    .node-drawer.open { right: 0; }
+
+    .drawer-header { padding: 16px 20px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
+    .drawer-header h3 { font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px; }
+    .drawer-close { cursor: pointer; color: #999; font-size: 20px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    .drawer-close:hover { background: #f5f5f5; color: #333; }
+
+    /* 抽屉 Tab */
+    .drawer-tabs { display: flex; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; }
+    .drawer-tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-size: 14px; color: #999; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    .drawer-tab.active { color: #1890ff; border-bottom-color: #1890ff; }
+    .drawer-tab:hover { color: #1890ff; }
+
+    /* 抽屉内容 */
+    .drawer-content { flex: 1; overflow-y: auto; }
+    .drawer-tab-panel { display: none; height: 100%; }
+    .drawer-tab-panel.active { display: flex; flex-direction: column; }
+
+    /* 配置 Tab */
+    .config-body { padding: 20px; flex: 1; overflow-y: auto; }
+    .config-section { margin-bottom: 20px; }
+    .config-section-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
+    .config-row { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; font-size: 13px; }
+    .config-label { color: #999; flex-shrink: 0; width: 80px; }
+    .config-value { color: #333; flex: 1; text-align: right; }
+    .config-actions { padding: 16px 20px; border-top: 1px solid #e8e8e8; display: flex; gap: 8px; flex-shrink: 0; }
+    .config-actions .toolbar-btn { flex: 1; text-align: center; }
+
+    /* 对话 Tab */
+    .chat-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .chat-message { margin-bottom: 16px; display: flex; gap: 12px; }
+    .chat-message.ai { flex-direction: row; }
+    .chat-message.user { flex-direction: row-reverse; }
+    .chat-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; flex-shrink: 0; }
+    .chat-avatar.ai { background: #1890ff; }
+    .chat-avatar.user { background: #52c41a; }
+    .chat-bubble { max-width: 85%; padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; }
+    .chat-message.ai .chat-bubble { background: #f6f8fa; }
+    .chat-message.user .chat-bubble { background: #e6f7ff; }
+    .chat-footer { padding: 12px 20px; border-top: 1px solid #e8e8e8; display: flex; gap: 8px; flex-shrink: 0; }
+    .chat-footer input { flex: 1; padding: 8px 12px; border: 1px solid #d9d9d9; border-radius: 6px; outline: none; font-size: 13px; }
+    .chat-footer input:focus { border-color: #1890ff; }
+    .chat-review { padding: 12px 20px; border-top: 1px solid #e8e8e8; flex-shrink: 0; }
+    .chat-review textarea { width: 100%; height: 50px; border: 1px solid #d9d9d9; border-radius: 6px; padding: 8px; font-size: 13px; resize: none; outline: none; margin-bottom: 8px; }
+    .chat-review textarea:focus { border-color: #1890ff; }
+    .review-btns { display: flex; gap: 8px; }
+    .btn-approve { flex: 1; padding: 8px; background: #52c41a; color: #fff; border: none; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .btn-approve:hover { background: #73d13d; }
+    .btn-reject { flex: 1; padding: 8px; background: #fff; color: #ff4d4f; border: 1px solid #ff4d4f; border-radius: 6px; font-size: 13px; cursor: pointer; }
+    .btn-reject:hover { background: #fff1f0; }
+
+    /* 日志 Tab */
+    .log-body { padding: 16px 20px; flex: 1; overflow-y: auto; font-family: 'SF Mono', 'Menlo', 'Consolas', monospace; }
+    .log-entry { display: flex; gap: 10px; margin-bottom: 10px; font-size: 12px; line-height: 1.5; }
+    .log-time { color: #999; flex-shrink: 0; white-space: nowrap; }
+    .log-level { flex-shrink: 0; padding: 0 6px; border-radius: 3px; font-size: 11px; height: 18px; line-height: 18px; text-align: center; }
+    .log-level.info { background: #e6f7ff; color: #1890ff; }
+    .log-level.success { background: #f6ffed; color: #52c41a; }
+    .log-level.warn { background: #fff7e6; color: #fa8c16; }
+    .log-level.error { background: #fff1f0; color: #ff4d4f; }
+    .log-msg { color: #333; word-break: break-all; }
+    .log-msg code { background: #f5f5f5; padding: 1px 4px; border-radius: 3px; font-size: 11px; }
+
+    /* 空状态 */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 80px 40px; text-align: center; }
+    .empty-icon { font-size: 64px; color: #d9d9d9; margin-bottom: 16px; }
+    .empty-title { font-size: 16px; color: #333; margin-bottom: 8px; }
+    .empty-desc { font-size: 13px; color: #999; margin-bottom: 24px; max-width: 300px; line-height: 1.6; }
+
+    /* ===== Page 5: Settings ===== */
+    .settings-page { display: flex; min-height: calc(100vh - 60px); }
+    .settings-sidebar { width: 220px; background: #fff; padding: 16px 0; border-right: 1px solid #e8e8e8; }
+    .settings-sidebar a { display: block; padding: 10px 24px; color: #333; text-decoration: none; font-size: 14px; cursor: pointer; }
+    .settings-sidebar a:hover, .settings-sidebar a.active { background: #e6f7ff; color: #1890ff; }
+    .settings-content { flex: 1; padding: 24px; }
+    .settings-content h3 { font-size: 18px; margin-bottom: 20px; }
+
+    .provider-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; }
+    .provider-info { display: flex; align-items: center; gap: 16px; }
+    .provider-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #fff; }
+    .provider-icon.openai { background: #10a37f; }
+    .provider-icon.claude { background: #d97706; }
+    .provider-icon.custom { background: #6366f1; }
+    .provider-name { font-size: 15px; font-weight: 500; }
+    .provider-model { font-size: 12px; color: #999; }
+    .badge-default { background: #e6f7ff; color: #1890ff; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+
+    .form-row { display: flex; gap: 16px; margin-bottom: 16px; }
+    .form-row .form-group { flex: 1; }
+
+    /* ===== Page Annotations ===== */
+    .annotation { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #ad6800; }
+    .annotation strong { color: #d48806; }
+
+    .page-label { position: fixed; bottom: 16px; right: 16px; background: #1890ff; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav" id="mainNav" style="display:none;">
+  <span class="title">AI Dev Workflow</span>
+  <div class="nav-left">
+    <a onclick="showPage('dashboard')" id="nav-dashboard">工作台</a>
+    <a onclick="showPage('pipeline')" id="nav-pipeline">流水线</a>
+    <a onclick="showPage('settings')" id="nav-settings">系统设置</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-avatar">张</div>
+    <span class="nav-username">张三</span>
+  </div>
+</nav>
+
+<!-- ==================== Page 1: 登录 ==================== -->
+<div class="page active" id="page-login">
+  <div class="login-page">
+    <div class="login-card">
+      <h1>AI Dev Workflow</h1>
+      <p class="subtitle">AI 驱动的软件开发全流程工作流平台</p>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab(this, 'login-form')">登录</div>
+        <div class="tab" onclick="switchTab(this, 'register-form')">注册</div>
+      </div>
+
+      <div id="login-form">
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" placeholder="请输入邮箱" />
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" placeholder="请输入密码" />
+        </div>
+        <button class="btn-primary" onclick="doLogin()">登录</button>
+      </div>
+
+      <div id="register-form" style="display:none;">
+        <div class="form-group">
+          <label>邮箱</label>
+          <input type="email" placeholder="请输入邮箱" />
+        </div>
+        <div class="form-group">
+          <label>昵称</label>
+          <input type="text" placeholder="请输入昵称" />
+        </div>
+        <div class="form-group">
+          <label>密码</label>
+          <input type="password" placeholder="密码至少6位" />
+        </div>
+        <button class="btn-primary">注册</button>
+      </div>
+    </div>
+  </div>
+  <div class="page-label">第 1 页 / 共 4 页：登录与注册</div>
+</div>
+
+<!-- ==================== Page 2: 工作台 ==================== -->
+<div class="page" id="page-dashboard">
+  <div class="dashboard">
+    <div class="annotation">
+      <strong>工作台：</strong>展示所有项目列表、工作流统计数据和快速创建入口。
+    </div>
+
+    <div class="dashboard-header">
+      <h2>我的项目</h2>
+      <button class="btn btn-blue">+ 新建项目</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card">
+        <div class="number">6</div>
+        <div class="label">项目总数</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">3</div>
+        <div class="label">进行中的工作流</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">12</div>
+        <div class="label">已完成的工作流</div>
+      </div>
+      <div class="stat-card">
+        <div class="number">2</div>
+        <div class="label">待审批</div>
+      </div>
+    </div>
+
+    <div class="project-list">
+      <div class="project-card" onclick="showPage('pipeline')">
+        <h3>user-center</h3>
+        <div class="desc">用户中心微服务，处理注册、登录和个人信息管理</div>
+        <div class="meta">
+          <span class="tag tag-blue">3 个工作流</span>
+          <span>2小时前更新</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <h3>payment-service</h3>
+        <div class="desc">支付服务，集成支付宝和微信支付</div>
+        <div class="meta">
+          <span class="tag tag-green">1 个工作流</span>
+          <span>1天前更新</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <h3>admin-dashboard</h3>
+        <div class="desc">后台管理系统，运营数据查看与配置管理</div>
+        <div class="meta">
+          <span class="tag tag-orange">2 个工作流</span>
+          <span>3天前更新</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <h3>notification-service</h3>
+        <div class="desc">通知服务，支持短信、邮件和推送通知</div>
+        <div class="meta">
+          <span class="tag tag-blue">1 个工作流</span>
+          <span>5天前更新</span>
+        </div>
+      </div>
+      <div class="project-card">
+        <h3>api-gateway</h3>
+        <div class="desc">API 网关，处理路由、限流和认证</div>
+        <div class="meta">
+          <span class="tag tag-green">4 个工作流</span>
+          <span>1周前更新</span>
+        </div>
+      </div>
+      <div class="project-card" style="border: 2px dashed #d9d9d9; display: flex; align-items: center; justify-content: center; color: #999; cursor: pointer;">
+        <div style="text-align: center;">
+          <div style="font-size: 32px; margin-bottom: 8px;">+</div>
+          <div>新建项目</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 空状态（新用户首次进入） -->
+    <div id="dashboard-empty" style="display: none;">
+      <div class="empty-state">
+        <div class="empty-icon">&#128193;</div>
+        <div class="empty-title">还没有任何项目</div>
+        <div class="empty-desc">创建你的第一个项目，开始使用 AI 驱动的开发工作流来加速软件交付</div>
+        <button class="btn btn-blue" style="padding: 10px 32px; font-size: 15px;">+ 新建项目</button>
+      </div>
+    </div>
+  </div>
+  <div class="page-label">第 2 页 / 共 4 页：工作台</div>
+</div>
+
+<!-- ==================== Page 3: 流水线画布 ==================== -->
+<div class="page" id="page-pipeline">
+  <div class="pipeline-page">
+
+    <!-- 左侧：节点面板 -->
+    <div class="node-panel">
+      <div class="node-panel-header">节点面板</div>
+      <div class="node-panel-list">
+        <div class="annotation" style="margin-bottom: 12px;">
+          <strong>拖拽节点</strong>到右侧画布来构建你的工作流
+        </div>
+
+        <div class="node-panel-group">
+          <div class="node-panel-group-title">需求阶段</div>
+          <div class="node-item"><div class="node-icon blue">P</div>PRD 审核</div>
+          <div class="node-item"><div class="node-icon blue">R</div>需求评审</div>
+        </div>
+
+        <div class="node-panel-group">
+          <div class="node-panel-group-title">开发阶段</div>
+          <div class="node-item"><div class="node-icon green">C</div>代码开发</div>
+          <div class="node-item"><div class="node-icon green">T</div>代码自测</div>
+          <div class="node-item"><div class="node-icon cyan">R</div>代码 Review</div>
+        </div>
+
+        <div class="node-panel-group">
+          <div class="node-panel-group-title">发布阶段</div>
+          <div class="node-item"><div class="node-icon orange">Q</div>项目提测</div>
+          <div class="node-item"><div class="node-icon red">D</div>代码上线</div>
+        </div>
+
+        <div class="node-panel-group">
+          <div class="node-panel-group-title">通用</div>
+          <div class="node-item"><div class="node-icon purple">A</div>AI 自定义任务</div>
+          <div class="node-item"><div class="node-icon purple">H</div>人工审批节点</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 中间：画布区域 -->
+    <div class="canvas-area">
+      <div class="canvas-toolbar">
+        <div class="canvas-toolbar-left">
+          <a class="back-link" onclick="showPage('dashboard')">← 返回</a>
+          <h3>user-center</h3>
+          <span class="tag tag-blue" style="margin-left: 4px;">工作流 #3：新增 OAuth 登录</span>
+        </div>
+        <div class="canvas-toolbar-right">
+          <button class="toolbar-btn">缩放适配</button>
+          <button class="toolbar-btn">撤销</button>
+          <button class="toolbar-btn">重做</button>
+          <button class="toolbar-btn primary">运行工作流</button>
+        </div>
+      </div>
+
+      <div class="canvas-body">
+        <div class="canvas-grid"></div>
+
+        <!-- 连接线 SVG -->
+        <svg class="canvas-connections" width="100%" height="100%">
+          <defs>
+            <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#52c41a" />
+            </marker>
+            <marker id="arrowYellow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#faad14" />
+            </marker>
+            <marker id="arrowGray" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#c0c0c0" />
+            </marker>
+          </defs>
+          <!-- 已通过连线 -->
+          <line x1="230" y1="80" x2="300" y2="80" stroke="#52c41a" stroke-width="2" marker-end="url(#arrowGreen)" />
+          <line x1="480" y1="80" x2="510" y2="160" stroke="#52c41a" stroke-width="2" marker-end="url(#arrowGreen)" />
+          <line x1="690" y1="170" x2="720" y2="260" stroke="#52c41a" stroke-width="2" marker-end="url(#arrowGreen)" />
+          <!-- 待审批连线（虚线） -->
+          <line x1="900" y1="270" x2="930" y2="170" stroke="#faad14" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrowYellow)" />
+          <!-- 未开始连线 -->
+          <line x1="1110" y1="170" x2="1140" y2="80" stroke="#c0c0c0" stroke-width="2" marker-end="url(#arrowGray)" />
+          <line x1="1320" y1="80" x2="1350" y2="170" stroke="#c0c0c0" stroke-width="2" marker-end="url(#arrowGray)" />
+        </svg>
+
+        <!-- 画布上的节点 -->
+        <div class="canvas-nodes">
+          <!-- 第 1 行 -->
+          <div class="canvas-node approved" style="left: 50px; top: 40px;" onclick="openDrawer()">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#1890ff;">P</div>
+              <span class="canvas-node-title">PRD 审核</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status approved">已通过</span>
+              <div class="canvas-node-meta">耗时 3 分钟</div>
+            </div>
+          </div>
+
+          <div class="canvas-node approved" style="left: 300px; top: 40px;">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#1890ff;">R</div>
+              <span class="canvas-node-title">需求评审</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status approved">已通过</span>
+              <div class="canvas-node-meta">耗时 5 分钟</div>
+            </div>
+          </div>
+
+          <!-- 第 2 行 -->
+          <div class="canvas-node approved" style="left: 510px; top: 130px;">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#52c41a;">C</div>
+              <span class="canvas-node-title">代码开发</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status approved">已通过</span>
+              <div class="canvas-node-meta">耗时 12 分钟</div>
+            </div>
+          </div>
+
+          <div class="canvas-node waiting" style="left: 930px; top: 130px;" onclick="openDrawer()">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#13c2c2;">R</div>
+              <span class="canvas-node-title">代码 Review</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status waiting">待审批</span>
+              <div class="canvas-node-meta">耗时 4 分钟</div>
+            </div>
+          </div>
+
+          <!-- 第 3 行 -->
+          <div class="canvas-node approved" style="left: 720px; top: 230px;">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#52c41a;">T</div>
+              <span class="canvas-node-title">代码自测</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status approved">已通过</span>
+              <div class="canvas-node-meta">耗时 4 分钟</div>
+            </div>
+          </div>
+
+          <!-- 第 1 行右侧 -->
+          <div class="canvas-node pending" style="left: 1140px; top: 40px;">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#fa8c16;">Q</div>
+              <span class="canvas-node-title">项目提测</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status pending">待开始</span>
+            </div>
+          </div>
+
+          <div class="canvas-node pending" style="left: 1350px; top: 130px;">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#ff4d4f;">D</div>
+              <span class="canvas-node-title">代码上线</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status pending">待开始</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- 画布空状态（新建工作流时） -->
+        <div id="canvas-empty" style="display: none;">
+          <div class="empty-state" style="position: absolute; inset: 0; z-index: 1;">
+            <div class="empty-icon">&#9881;</div>
+            <div class="empty-title">画布是空的</div>
+            <div class="empty-desc">从左侧节点面板拖拽节点到画布，或使用模板快速创建工作流</div>
+            <div style="display: flex; gap: 12px;">
+              <button class="toolbar-btn">使用默认模板</button>
+              <button class="toolbar-btn primary">使用空白画布</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <div class="page-label">第 3 页 / 共 4 页：流水线画布</div>
+</div>
+
+<!-- 节点抽屉（点击画布节点弹出） -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="node-drawer" id="nodeDrawer">
+  <div class="drawer-header">
+    <h3>
+      <span class="canvas-node-icon" style="background:#13c2c2; width:24px; height:24px; font-size:12px;">R</span>
+      代码 Review
+      <span class="canvas-node-status waiting" style="margin-left: 4px;">待审批</span>
+    </h3>
+    <span class="drawer-close" onclick="closeDrawer()">&times;</span>
+  </div>
+
+  <div class="drawer-tabs">
+    <div class="drawer-tab active" onclick="switchDrawerTab(this, 'tab-config')">节点配置</div>
+    <div class="drawer-tab" onclick="switchDrawerTab(this, 'tab-chat')">AI 对话</div>
+    <div class="drawer-tab" onclick="switchDrawerTab(this, 'tab-logs')">执行日志</div>
+  </div>
+
+  <div class="drawer-content">
+    <!-- Tab 1: 配置 -->
+    <div class="drawer-tab-panel active" id="tab-config">
+      <div class="config-body">
+        <div class="config-section">
+          <div class="config-section-title">基本信息</div>
+          <div class="config-row">
+            <span class="config-label">节点类型</span>
+            <span class="config-value">AI 执行 + 人工审批</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">AI 模型</span>
+            <span class="config-value">Claude 4 Sonnet</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">超时设置</span>
+            <span class="config-value">30 分钟</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">输入来源</span>
+            <span class="config-value">代码自测 → 输出</span>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">执行数据</div>
+          <div class="config-row">
+            <span class="config-label">Token 消耗</span>
+            <span class="config-value">12,450</span>
+          </div>
+          <div class="config-row">
+            <span class="config-label">耗时</span>
+            <span class="config-value">4分32秒</span>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">Prompt 模板</div>
+          <div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6; color:#333;">
+            请审查以下代码变更，关注：<br>
+            1. 代码规范与可读性<br>
+            2. 潜在的安全隐患<br>
+            3. 性能优化建议<br>
+            4. 测试覆盖完整性
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">输入数据</div>
+          <div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">
+            <div style="color: #999; margin-bottom: 4px;">来源</div>
+            <div>PR #47: feature/oauth-login</div>
+            <div style="color: #999; margin-top: 8px; margin-bottom: 4px;">变更文件</div>
+            <div>src/auth/oauth.service.ts<br>src/auth/oauth.controller.ts<br>src/auth/strategies/google.strategy.ts</div>
+          </div>
+        </div>
+
+        <div class="config-section">
+          <div class="config-section-title">输出数据</div>
+          <div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">
+            <div style="color: #52c41a; font-weight: 500;">11/11 测试通过 · 覆盖率 91.2%</div>
+            <div style="color: #999; margin-top: 8px; margin-bottom: 4px;">生成文件</div>
+            <div>src/auth/__tests__/oauth.service.spec.ts<br>src/auth/__tests__/oauth.controller.spec.ts</div>
+          </div>
+        </div>
+      </div>
+      <div class="config-actions">
+        <button class="toolbar-btn">重新执行</button>
+        <button class="toolbar-btn primary">执行节点</button>
+      </div>
+    </div>
+
+    <!-- Tab 2: AI 对话 -->
+    <div class="drawer-tab-panel" id="tab-chat">
+      <div class="chat-body">
+        <div class="chat-message ai">
+          <div class="chat-avatar ai">AI</div>
+          <div class="chat-bubble">
+            我已分析代码变更，并为 OAuth 登录功能生成了以下测试用例：
+            <br><br>
+            <strong>单元测试（8 个用例）：</strong><br>
+            1. 应正确跳转到 OAuth 提供方<br>
+            2. 应正确处理带有效授权码的回调<br>
+            3. 应拒绝无效的 OAuth state<br>
+            4. 首次 OAuth 登录应创建新用户<br>
+            5. 应关联已有账号<br>
+            6. 应正确处理 Token 刷新<br>
+            7. 应优雅处理提供方错误<br>
+            8. 应验证回调地址
+            <br><br>
+            <strong>测试结果：</strong>8/8 通过<br>
+            <strong>覆盖率：</strong>87.3%
+          </div>
+        </div>
+
+        <div class="chat-message user">
+          <div class="chat-avatar user">我</div>
+          <div class="chat-bubble">能否补充 Token 过期场景的边界测试？</div>
+        </div>
+
+        <div class="chat-message ai">
+          <div class="chat-avatar ai">AI</div>
+          <div class="chat-bubble">
+            好的建议。我已补充 3 个 Token 过期相关的测试用例：
+            <br><br>
+            9. 应处理 access_token 过期<br>
+            10. 应处理 refresh_token 过期<br>
+            11. 应处理两个 Token 同时过期
+            <br><br>
+            <strong>更新后结果：</strong>11/11 通过<br>
+            <strong>覆盖率：</strong>91.2%<br><br>
+            所有测试已提交到分支 <code>feature/oauth-login</code>。
+          </div>
+        </div>
+      </div>
+
+      <div class="chat-footer">
+        <input type="text" placeholder="输入消息与 AI 对话..." />
+        <button class="btn btn-blue">发送</button>
+      </div>
+
+      <div class="chat-review">
+        <textarea placeholder="审批意见（选填）..."></textarea>
+        <div class="review-btns">
+          <button class="btn-reject">驳回</button>
+          <button class="btn-approve">通过</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: 执行日志 -->
+    <div class="drawer-tab-panel" id="tab-logs">
+      <div class="log-body">
+        <div class="log-entry">
+          <span class="log-time">14:23:01</span>
+          <span class="log-level info">INFO</span>
+          <span class="log-msg">节点开始执行，使用模型 <code>claude-sonnet-4-6</code></span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:02</span>
+          <span class="log-level info">INFO</span>
+          <span class="log-msg">读取输入数据：来自「代码自测」节点输出</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:02</span>
+          <span class="log-level info">INFO</span>
+          <span class="log-msg">变更文件：<code>oauth.service.ts</code>, <code>oauth.controller.ts</code>, <code>google.strategy.ts</code></span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:03</span>
+          <span class="log-level info">INFO</span>
+          <span class="log-msg">发送 Prompt 到 AI，Token 输入：4,280</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:15</span>
+          <span class="log-level success">OK</span>
+          <span class="log-msg">AI 响应完成，Token 输出：8,170，耗时 12.3s</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:16</span>
+          <span class="log-level info">INFO</span>
+          <span class="log-msg">生成代码审查报告，发现 0 个严重问题、2 个建议</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:16</span>
+          <span class="log-level warn">WARN</span>
+          <span class="log-msg">建议：<code>oauth.service.ts:47</code> refresh_token 缺少过期校验</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:16</span>
+          <span class="log-level warn">WARN</span>
+          <span class="log-msg">建议：<code>google.strategy.ts:23</code> 回调 URL 建议使用环境变量配置</span>
+        </div>
+        <div class="log-entry">
+          <span class="log-time">14:23:17</span>
+          <span class="log-level success">OK</span>
+          <span class="log-msg">节点执行完成，总耗时 4分32秒，等待人工审批</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==================== Page 5: 系统设置 ==================== -->
+<div class="page" id="page-settings">
+  <div class="settings-page">
+    <div class="settings-sidebar">
+      <a class="active">AI 模型配置</a>
+      <a>Git 凭证管理</a>
+      <a>个人信息</a>
+    </div>
+    <div class="settings-content">
+      <div class="annotation">
+        <strong>系统设置：</strong>配置 AI 模型提供商、Git 凭证和个人信息。支持多个 AI 提供商，并可为每个阶段指定不同模型。
+      </div>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3>AI 模型提供商</h3>
+        <button class="btn btn-blue">+ 添加提供商</button>
+      </div>
+
+      <div class="provider-card">
+        <div class="provider-info">
+          <div class="provider-icon openai">O</div>
+          <div>
+            <div class="provider-name">OpenAI <span class="badge-default">默认</span></div>
+            <div class="provider-model">gpt-4o &middot; https://api.openai.com</div>
+          </div>
+        </div>
+        <div>
+          <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
+          <button class="btn" style="background: #f5f5f5;">删除</button>
+        </div>
+      </div>
+
+      <div class="provider-card">
+        <div class="provider-info">
+          <div class="provider-icon claude">C</div>
+          <div>
+            <div class="provider-name">Claude</div>
+            <div class="provider-model">claude-sonnet-4-6 &middot; https://api.anthropic.com</div>
+          </div>
+        </div>
+        <div>
+          <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
+          <button class="btn" style="background: #f5f5f5;">删除</button>
+        </div>
+      </div>
+
+      <div class="provider-card">
+        <div class="provider-info">
+          <div class="provider-icon custom">S</div>
+          <div>
+            <div class="provider-name">自部署 Qwen</div>
+            <div class="provider-model">qwen-72b &middot; http://10.0.1.50:8080</div>
+          </div>
+        </div>
+        <div>
+          <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
+          <button class="btn" style="background: #f5f5f5;">删除</button>
+        </div>
+      </div>
+
+      <!-- Stage Model Assignment -->
+      <h3 style="margin-top: 32px; margin-bottom: 16px;">阶段模型分配</h3>
+      <div style="background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #666; font-size: 13px;">阶段</th>
+              <th style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #666; font-size: 13px;">指定模型</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">PRD 审核</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">需求评审</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码开发</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option selected>Claude (claude-sonnet-4-6)</option><option>OpenAI (gpt-4o)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码自测</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option selected>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码 Review</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option selected>Claude (claude-sonnet-4-6)</option><option>OpenAI (gpt-4o)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">项目提测</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            <tr><td style="padding: 10px 12px; font-size: 14px;">代码上线</td><td style="padding: 10px 12px;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="page-label">第 4 页 / 共 4 页：系统设置</div>
+</div>
+
+<script>
+  function showPage(name) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.getElementById('page-' + name).classList.add('active');
+    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
+    const navLink = document.getElementById('nav-' + name);
+    if (navLink) navLink.classList.add('active');
+    document.getElementById('mainNav').style.display = name === 'login' ? 'none' : 'flex';
+  }
+
+  function switchTab(el, formId) {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('login-form').style.display = 'none';
+    document.getElementById('register-form').style.display = 'none';
+    document.getElementById(formId).style.display = 'block';
+  }
+
+  function doLogin() {
+    showPage('dashboard');
+  }
+
+  // 抽屉
+  function openDrawer() {
+    document.getElementById('drawerOverlay').classList.add('open');
+    document.getElementById('nodeDrawer').classList.add('open');
+  }
+
+  function closeDrawer() {
+    document.getElementById('drawerOverlay').classList.remove('open');
+    document.getElementById('nodeDrawer').classList.remove('open');
+  }
+
+  function switchDrawerTab(el, panelId) {
+    document.querySelectorAll('.drawer-tab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.drawer-tab-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById(panelId).classList.add('active');
+  }
+</script>
+
+</body>
+</html>
