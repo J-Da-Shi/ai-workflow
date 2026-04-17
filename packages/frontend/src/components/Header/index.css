@@ -1,0 +1,68 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #1890ff;
+  padding: 0 24px;
+  height: 48px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+
+.header-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #fff;
+  cursor: pointer;
+}
+
+.header-nav {
+  display: flex;
+  gap: 4px;
+}
+
+.header-nav a {
+  color: #fff;
+  text-decoration: none;
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.header-nav a:hover,
+.header-nav a.active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+}
+
+.header-user {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.header-user:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.header-username {
+  color: #fff;
+  font-size: 14px;
+}

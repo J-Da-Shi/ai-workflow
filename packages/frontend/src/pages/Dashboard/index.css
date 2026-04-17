@@ -1,0 +1,128 @@
+.dashboard {
+  padding: 24px;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.dashboard-header h2 {
+  font-size: 22px;
+  margin: 0;
+}
+
+/* 统计卡片 */
+.stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.stat-card {
+  flex: 1;
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: bold;
+  color: #1890ff;
+}
+
+.stat-label {
+  font-size: 13px;
+  color: #999;
+  margin-top: 4px;
+}
+
+/* 项目卡片列表 */
+.project-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.project-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.project-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.project-card h3 {
+  font-size: 16px;
+  margin: 0 0 8px;
+}
+
+.project-desc {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 12px;
+}
+
+.project-meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: #999;
+}
+
+.project-tag {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+}
+
+.tag-blue {
+  background: #e6f7ff;
+  color: #1890ff;
+}
+
+.tag-green {
+  background: #f6ffed;
+  color: #52c41a;
+}
+
+.tag-orange {
+  background: #fff7e6;
+  color: #fa8c16;
+}
+
+/* 新建项目卡片 */
+.project-card-add {
+  border: 2px dashed #d9d9d9;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+}
+
+.project-card-add:hover {
+  border-color: #1890ff;
+  color: #1890ff;
+}
+
+.add-content {
+  text-align: center;
+}
+
+.add-icon {
+  font-size: 32px;
+  margin-bottom: 8px;
+  line-height: 1;
+}
