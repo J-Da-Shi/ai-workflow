@@ -45,7 +45,7 @@ export default function NodeDrawer({ open, node, onClose }: NodeDrawerProps) {
             <Tabs
                 defaultActiveKey="config"
                 items={[
-                    { key: 'config', label: '节点配置', children: <div>配置内容占位</div> },
+                    { key: 'config', label: '节点配置', children: <div>配置内容占位2</div> },
                     { key: 'chat', label: 'AI 对话', children: <div>对话内容占位</div> },
                     { key: 'logs', label: '执行日志', children: <div>日志内容占位</div> },
                 ]}
