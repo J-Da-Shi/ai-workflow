@@ -1,0 +1,72 @@
+/* 节点卡片 */
+.stage-node {
+  width: 180px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-left: 4px solid #d9d9d9;
+  cursor: pointer;
+  transition: box-shadow 0.2s;
+}
+
+.stage-node:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+/* 状态左边框颜色 */
+.stage-node.pending { border-left-color: #d9d9d9; }
+.stage-node.running { border-left-color: #1890ff; }
+.stage-node.waiting { border-left-color: #faad14; }
+.stage-node.approved { border-left-color: #52c41a; }
+.stage-node.rejected { border-left-color: #ff4d4f; }
+
+/* 头部 */
+.stage-node-header {
+  padding: 10px 12px;
+  border-bottom: 1px solid #f0f0f0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage-node-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.stage-node-title {
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+}
+
+/* 内容 */
+.stage-node-body {
+  padding: 10px 12px;
+}
+
+.stage-node-status {
+  font-size: 12px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.stage-node-status.pending { background: #fafafa; color: #999; }
+.stage-node-status.running { background: #e6f7ff; color: #1890ff; }
+.stage-node-status.waiting { background: #fff7e6; color: #faad14; }
+.stage-node-status.approved { background: #f6ffed; color: #52c41a; }
+.stage-node-status.rejected { background: #fff1f0; color: #ff4d4f; }
+
+.stage-node-meta {
+  font-size: 11px;
+  color: #999;
+  margin-top: 6px;
+}

@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { isTokenExpired } from './auth';
 
 const request = axios.create({
   baseURL: '/api',
@@ -7,9 +8,15 @@ const request = axios.create({
 
 request.interceptors.request.use(
   (config) => {
-    // 可在此添加 token 等通用请求头
-    const token = localStorage.getItem('token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    const token = localStorage.getItem('token');                                                                                                       
+    if (token) {                                                                                                                                       
+      if (isTokenExpired()) {                                                                                                                          
+        localStorage.removeItem('token');                                                                                                              
+        window.location.href = '/login';                                                                                                               
+        return Promise.reject(new Error('token expired'));                                                                                             
+      }                                                                                                                                                
+      config.headers.Authorization = `Bearer ${token}`;                                                                                                
+    } 
     return config;
   },
   (error) => Promise.reject(error),
@@ -21,7 +28,8 @@ request.interceptors.response.use(
     const status = error.response?.status;
     if(status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login';
+      // window.location.href = '/login';
+      console.log('账号/密码错误')
     }
     const message = error.response?.data?.message || error.message;
     console.error('请求错误:', message);

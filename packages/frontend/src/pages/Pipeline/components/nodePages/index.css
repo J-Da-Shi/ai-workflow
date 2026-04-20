@@ -1,0 +1,16 @@
+.pipeline-page {
+  width: 100%;
+  height: calc(100vh - 100px);
+}
+
+.pipeline-header {
+  padding: 10px;
+  border-bottom: 1px solid #e8e8e8;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+}
+
+.btn .ant-btn {
+  margin-left: 10px;
+}
