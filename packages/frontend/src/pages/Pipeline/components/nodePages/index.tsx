@@ -17,12 +17,16 @@ import type { StageNodeData } from '../../types';
 import { stageNode } from './../stageNode/nodeTypes';
 import { stageEdge } from '../stageEdge/edgeTypes';
 import './index.css';
+import NodeDrawer from '../nodeDrawer';
 
 export default function NodePages() {
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [history, setHistory] = useState<{ nodes: Node[], edges: Edge[] }[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
+  const [selectedNode, setSelectedNode] = useState<StageNodeData | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
+
   const isUndoRedo = useRef(false); // 标记当前是否在撤销/重做，避免重复记录
 
   useEffect(() => {
@@ -126,6 +130,11 @@ export default function NodePages() {
 
   const run = () => { };
 
+  const onNodeClick = useCallback((_: any, node: Node) => {
+    setSelectedNode(node.data as StageNodeData)
+    setDrawerOpen(true)
+  }, [])
+
   return (
     <div className="pipeline-page">
       <div className="pipeline-header">
@@ -150,6 +159,7 @@ export default function NodePages() {
         onConnect={onConnect}
         onDragOver={onDragOver}
         onDrop={onDrop}
+        onNodeClick={onNodeClick}
         fitView
         proOptions={{ hideAttribution: true }}
       >
@@ -157,6 +167,11 @@ export default function NodePages() {
         <Controls />
         <MiniMap />
       </ReactFlow>
+      <NodeDrawer
+        open={drawerOpen}
+        node={selectedNode}
+        onClose={() => setDrawerOpen(flase)}
+      />
     </div>
   );
 }

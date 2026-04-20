@@ -21,3 +21,10 @@ export interface NodeCategory {
   key: string;
   children: NodeItem[];
 }
+
+// 抽屉
+export interface NodeDrawerProps {
+  open: boolean;
+  node: StageNodeData,
+  onClose: () => void;
+}

@@ -468,7 +468,7 @@
         <!-- 画布上的节点 -->
         <div class="canvas-nodes">
           <!-- 第 1 行 -->
-          <div class="canvas-node approved" style="left: 50px; top: 40px;" onclick="openDrawer()">
+          <div class="canvas-node approved" style="left: 50px; top: 40px;" onclick="openDrawer('prd')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#1890ff;">P</div>
               <span class="canvas-node-title">PRD 审核</span>
@@ -479,7 +479,7 @@
             </div>
           </div>
 
-          <div class="canvas-node approved" style="left: 300px; top: 40px;">
+          <div class="canvas-node approved" style="left: 300px; top: 40px;" onclick="openDrawer('requirement')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#1890ff;">R</div>
               <span class="canvas-node-title">需求评审</span>
@@ -491,7 +491,7 @@
           </div>
 
           <!-- 第 2 行 -->
-          <div class="canvas-node approved" style="left: 510px; top: 130px;">
+          <div class="canvas-node approved" style="left: 510px; top: 130px;" onclick="openDrawer('coding')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#52c41a;">C</div>
               <span class="canvas-node-title">代码开发</span>
@@ -502,7 +502,7 @@
             </div>
           </div>
 
-          <div class="canvas-node waiting" style="left: 930px; top: 130px;" onclick="openDrawer()">
+          <div class="canvas-node waiting" style="left: 930px; top: 130px;" onclick="openDrawer('review')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#13c2c2;">R</div>
               <span class="canvas-node-title">代码 Review</span>
@@ -514,7 +514,7 @@
           </div>
 
           <!-- 第 3 行 -->
-          <div class="canvas-node approved" style="left: 720px; top: 230px;">
+          <div class="canvas-node approved" style="left: 720px; top: 230px;" onclick="openDrawer('testing')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#52c41a;">T</div>
               <span class="canvas-node-title">代码自测</span>
@@ -526,7 +526,7 @@
           </div>
 
           <!-- 第 1 行右侧 -->
-          <div class="canvas-node pending" style="left: 1140px; top: 40px;">
+          <div class="canvas-node pending" style="left: 1140px; top: 40px;" onclick="openDrawer('qa')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#fa8c16;">Q</div>
               <span class="canvas-node-title">项目提测</span>
@@ -536,7 +536,7 @@
             </div>
           </div>
 
-          <div class="canvas-node pending" style="left: 1350px; top: 130px;">
+          <div class="canvas-node pending" style="left: 1350px; top: 130px;" onclick="openDrawer('deploy')">
             <div class="canvas-node-header">
               <div class="canvas-node-icon" style="background:#ff4d4f;">D</div>
               <span class="canvas-node-title">代码上线</span>
@@ -571,11 +571,7 @@
 <div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
 <div class="node-drawer" id="nodeDrawer">
   <div class="drawer-header">
-    <h3>
-      <span class="canvas-node-icon" style="background:#13c2c2; width:24px; height:24px; font-size:12px;">R</span>
-      代码 Review
-      <span class="canvas-node-status waiting" style="margin-left: 4px;">待审批</span>
-    </h3>
+    <h3 id="drawerTitle"></h3>
     <span class="drawer-close" onclick="closeDrawer()">&times;</span>
   </div>
 
@@ -588,69 +584,7 @@
   <div class="drawer-content">
     <!-- Tab 1: 配置 -->
     <div class="drawer-tab-panel active" id="tab-config">
-      <div class="config-body">
-        <div class="config-section">
-          <div class="config-section-title">基本信息</div>
-          <div class="config-row">
-            <span class="config-label">节点类型</span>
-            <span class="config-value">AI 执行 + 人工审批</span>
-          </div>
-          <div class="config-row">
-            <span class="config-label">AI 模型</span>
-            <span class="config-value">Claude 4 Sonnet</span>
-          </div>
-          <div class="config-row">
-            <span class="config-label">超时设置</span>
-            <span class="config-value">30 分钟</span>
-          </div>
-          <div class="config-row">
-            <span class="config-label">输入来源</span>
-            <span class="config-value">代码自测 → 输出</span>
-          </div>
-        </div>
-
-        <div class="config-section">
-          <div class="config-section-title">执行数据</div>
-          <div class="config-row">
-            <span class="config-label">Token 消耗</span>
-            <span class="config-value">12,450</span>
-          </div>
-          <div class="config-row">
-            <span class="config-label">耗时</span>
-            <span class="config-value">4分32秒</span>
-          </div>
-        </div>
-
-        <div class="config-section">
-          <div class="config-section-title">Prompt 模板</div>
-          <div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6; color:#333;">
-            请审查以下代码变更，关注：<br>
-            1. 代码规范与可读性<br>
-            2. 潜在的安全隐患<br>
-            3. 性能优化建议<br>
-            4. 测试覆盖完整性
-          </div>
-        </div>
-
-        <div class="config-section">
-          <div class="config-section-title">输入数据</div>
-          <div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">
-            <div style="color: #999; margin-bottom: 4px;">来源</div>
-            <div>PR #47: feature/oauth-login</div>
-            <div style="color: #999; margin-top: 8px; margin-bottom: 4px;">变更文件</div>
-            <div>src/auth/oauth.service.ts<br>src/auth/oauth.controller.ts<br>src/auth/strategies/google.strategy.ts</div>
-          </div>
-        </div>
-
-        <div class="config-section">
-          <div class="config-section-title">输出数据</div>
-          <div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">
-            <div style="color: #52c41a; font-weight: 500;">11/11 测试通过 · 覆盖率 91.2%</div>
-            <div style="color: #999; margin-top: 8px; margin-bottom: 4px;">生成文件</div>
-            <div>src/auth/__tests__/oauth.service.spec.ts<br>src/auth/__tests__/oauth.controller.spec.ts</div>
-          </div>
-        </div>
-      </div>
+      <div class="config-body" id="configBody"></div>
       <div class="config-actions">
         <button class="toolbar-btn">重新执行</button>
         <button class="toolbar-btn primary">执行节点</button>
@@ -659,54 +593,12 @@
 
     <!-- Tab 2: AI 对话 -->
     <div class="drawer-tab-panel" id="tab-chat">
-      <div class="chat-body">
-        <div class="chat-message ai">
-          <div class="chat-avatar ai">AI</div>
-          <div class="chat-bubble">
-            我已分析代码变更，并为 OAuth 登录功能生成了以下测试用例：
-            <br><br>
-            <strong>单元测试（8 个用例）：</strong><br>
-            1. 应正确跳转到 OAuth 提供方<br>
-            2. 应正确处理带有效授权码的回调<br>
-            3. 应拒绝无效的 OAuth state<br>
-            4. 首次 OAuth 登录应创建新用户<br>
-            5. 应关联已有账号<br>
-            6. 应正确处理 Token 刷新<br>
-            7. 应优雅处理提供方错误<br>
-            8. 应验证回调地址
-            <br><br>
-            <strong>测试结果：</strong>8/8 通过<br>
-            <strong>覆盖率：</strong>87.3%
-          </div>
-        </div>
-
-        <div class="chat-message user">
-          <div class="chat-avatar user">我</div>
-          <div class="chat-bubble">能否补充 Token 过期场景的边界测试？</div>
-        </div>
-
-        <div class="chat-message ai">
-          <div class="chat-avatar ai">AI</div>
-          <div class="chat-bubble">
-            好的建议。我已补充 3 个 Token 过期相关的测试用例：
-            <br><br>
-            9. 应处理 access_token 过期<br>
-            10. 应处理 refresh_token 过期<br>
-            11. 应处理两个 Token 同时过期
-            <br><br>
-            <strong>更新后结果：</strong>11/11 通过<br>
-            <strong>覆盖率：</strong>91.2%<br><br>
-            所有测试已提交到分支 <code>feature/oauth-login</code>。
-          </div>
-        </div>
-      </div>
-
+      <div class="chat-body" id="chatBody"></div>
       <div class="chat-footer">
         <input type="text" placeholder="输入消息与 AI 对话..." />
         <button class="btn btn-blue">发送</button>
       </div>
-
-      <div class="chat-review">
+      <div class="chat-review" id="chatReview">
         <textarea placeholder="审批意见（选填）..."></textarea>
         <div class="review-btns">
           <button class="btn-reject">驳回</button>
@@ -717,53 +609,7 @@
 
     <!-- Tab 3: 执行日志 -->
     <div class="drawer-tab-panel" id="tab-logs">
-      <div class="log-body">
-        <div class="log-entry">
-          <span class="log-time">14:23:01</span>
-          <span class="log-level info">INFO</span>
-          <span class="log-msg">节点开始执行，使用模型 <code>claude-sonnet-4-6</code></span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:02</span>
-          <span class="log-level info">INFO</span>
-          <span class="log-msg">读取输入数据：来自「代码自测」节点输出</span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:02</span>
-          <span class="log-level info">INFO</span>
-          <span class="log-msg">变更文件：<code>oauth.service.ts</code>, <code>oauth.controller.ts</code>, <code>google.strategy.ts</code></span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:03</span>
-          <span class="log-level info">INFO</span>
-          <span class="log-msg">发送 Prompt 到 AI，Token 输入：4,280</span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:15</span>
-          <span class="log-level success">OK</span>
-          <span class="log-msg">AI 响应完成，Token 输出：8,170，耗时 12.3s</span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:16</span>
-          <span class="log-level info">INFO</span>
-          <span class="log-msg">生成代码审查报告，发现 0 个严重问题、2 个建议</span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:16</span>
-          <span class="log-level warn">WARN</span>
-          <span class="log-msg">建议：<code>oauth.service.ts:47</code> refresh_token 缺少过期校验</span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:16</span>
-          <span class="log-level warn">WARN</span>
-          <span class="log-msg">建议：<code>google.strategy.ts:23</code> 回调 URL 建议使用环境变量配置</span>
-        </div>
-        <div class="log-entry">
-          <span class="log-time">14:23:17</span>
-          <span class="log-level success">OK</span>
-          <span class="log-msg">节点执行完成，总耗时 4分32秒，等待人工审批</span>
-        </div>
-      </div>
+      <div class="log-body" id="logBody"></div>
     </div>
   </div>
 </div>
@@ -876,8 +722,293 @@
     showPage('dashboard');
   }
 
-  // 抽屉
-  function openDrawer() {
+  /* ========== 7 个节点的抽屉数据 ========== */
+  const nodeDrawerData = {
+    prd: {
+      icon: 'P', iconBg: '#1890ff', name: 'PRD 审核', status: 'approved', statusLabel: '已通过',
+      config: {
+        nodeType: 'AI 执行 + 人工审批',
+        aiModel: 'GPT-4o',
+        timeout: '15 分钟',
+        inputSource: '手动上传 PRD 文档',
+        tokenUsage: '6,320',
+        duration: '3分12秒',
+        prompt: '请审核以下 PRD 文档，关注：<br>1. 需求完整性与清晰度<br>2. 技术可行性评估<br>3. 安全与合规要求<br>4. 是否存在歧义或遗漏',
+        inputData: { source: 'PRD: OAuth 第三方登录需求', files: ['docs/prd-oauth-login-v2.md'] },
+        outputData: { summary: '审核通过，2 条建议', files: ['docs/prd-review-report.md'] },
+      },
+      chat: [
+        { role: 'ai', content: '我已审核完 PRD 文档「OAuth 第三方登录需求 v2」，整体需求描述清晰，技术方案合理。<br><br><strong>审核结论：通过</strong><br><br><strong>2 条改进建议：</strong><br>1. 建议补充 OAuth Token 有效期及刷新策略的说明<br>2. 建议明确第三方登录失败时的降级方案' },
+        { role: 'user', content: '建议已采纳，已更新 PRD 文档' },
+        { role: 'ai', content: '确认收到更新。PRD 文档审核通过，可以进入下一阶段。' },
+      ],
+      logs: [
+        { time: '10:15:01', level: 'info', msg: '节点开始执行，使用模型 <code>gpt-4o</code>' },
+        { time: '10:15:02', level: 'info', msg: '读取输入数据：PRD 文档 <code>prd-oauth-login-v2.md</code>' },
+        { time: '10:15:03', level: 'info', msg: '发送 Prompt 到 AI，Token 输入：2,840' },
+        { time: '10:15:18', level: 'success', msg: 'AI 响应完成，Token 输出：3,480，耗时 15.2s' },
+        { time: '10:15:19', level: 'info', msg: '生成审核报告，发现 0 个阻塞项、2 个建议' },
+        { time: '10:15:19', level: 'warn', msg: '建议：补充 OAuth Token 刷新策略说明' },
+        { time: '10:15:19', level: 'warn', msg: '建议：明确第三方登录失败降级方案' },
+        { time: '10:15:20', level: 'success', msg: '节点执行完成，总耗时 3分12秒，人工审批已通过' },
+      ],
+    },
+
+    requirement: {
+      icon: 'R', iconBg: '#1890ff', name: '需求评审', status: 'approved', statusLabel: '已通过',
+      config: {
+        nodeType: 'AI 执行 + 人工审批',
+        aiModel: 'GPT-4o',
+        timeout: '20 分钟',
+        inputSource: 'PRD 审核 → 输出',
+        tokenUsage: '8,750',
+        duration: '5分08秒',
+        prompt: '请对以下需求进行技术评审，关注：<br>1. 接口设计合理性<br>2. 数据模型设计<br>3. 任务拆分粒度<br>4. 预估工时合理性',
+        inputData: { source: 'PRD 审核通过文档', files: ['docs/prd-oauth-login-v2.md', 'docs/prd-review-report.md'] },
+        outputData: { summary: '评审通过，拆分为 5 个子任务', files: ['docs/tech-review-report.md', 'docs/task-breakdown.md'] },
+      },
+      chat: [
+        { role: 'ai', content: '需求技术评审完成，已将需求拆分为 5 个子任务：<br><br>1. Google OAuth 策略实现（2h）<br>2. OAuth 回调处理与 Token 管理（3h）<br>3. 用户关联与首次登录创建（2h）<br>4. 前端 OAuth 按钮与跳转（1.5h）<br>5. 集成测试与安全审查（1.5h）<br><br><strong>预估总工时：</strong>10h<br><strong>评审结论：</strong>通过' },
+        { role: 'user', content: '任务拆分合理，通过' },
+      ],
+      logs: [
+        { time: '10:20:01', level: 'info', msg: '节点开始执行，使用模型 <code>gpt-4o</code>' },
+        { time: '10:20:02', level: 'info', msg: '读取输入数据：来自「PRD 审核」节点输出' },
+        { time: '10:20:03', level: 'info', msg: '发送 Prompt 到 AI，Token 输入：3,120' },
+        { time: '10:20:25', level: 'success', msg: 'AI 响应完成，Token 输出：5,630，耗时 22.1s' },
+        { time: '10:20:26', level: 'info', msg: '生成技术评审报告和任务拆分文档' },
+        { time: '10:20:26', level: 'info', msg: '拆分为 5 个子任务，预估总工时 10h' },
+        { time: '10:20:27', level: 'success', msg: '节点执行完成，总耗时 5分08秒，人工审批已通过' },
+      ],
+    },
+
+    coding: {
+      icon: 'C', iconBg: '#52c41a', name: '代码开发', status: 'approved', statusLabel: '已通过',
+      config: {
+        nodeType: 'AI 执行',
+        aiModel: 'Claude 4 Sonnet',
+        timeout: '60 分钟',
+        inputSource: '需求评审 → 输出',
+        tokenUsage: '45,200',
+        duration: '12分35秒',
+        prompt: '根据以下技术评审和任务拆分，实现 OAuth 第三方登录功能：<br>1. 按照任务拆分逐步实现<br>2. 遵循项目代码规范<br>3. 添加必要的错误处理<br>4. 编写内联注释说明关键逻辑',
+        inputData: { source: '任务拆分文档', files: ['docs/task-breakdown.md', 'docs/tech-review-report.md'] },
+        outputData: { summary: '已完成 5 个子任务的代码实现', files: ['src/auth/oauth.service.ts', 'src/auth/oauth.controller.ts', 'src/auth/strategies/google.strategy.ts', 'src/auth/dto/oauth-callback.dto.ts'] },
+      },
+      chat: [
+        { role: 'ai', content: '代码开发已完成。根据任务拆分，已实现以下内容：<br><br><strong>新增文件：</strong><br>- <code>oauth.service.ts</code> — OAuth 核心服务，包含 Token 管理和用户关联<br>- <code>oauth.controller.ts</code> — OAuth 路由控制器<br>- <code>google.strategy.ts</code> — Google OAuth Passport 策略<br>- <code>oauth-callback.dto.ts</code> — 回调参数 DTO<br><br><strong>修改文件：</strong><br>- <code>auth.module.ts</code> — 注册 OAuth 相关 Provider<br>- <code>user.entity.ts</code> — 添加 oauthProvider、oauthId 字段<br><br>代码已提交到分支 <code>feature/oauth-login</code>。' },
+        { role: 'user', content: '看起来不错，进入下一步测试' },
+      ],
+      logs: [
+        { time: '10:30:01', level: 'info', msg: '节点开始执行，使用模型 <code>claude-sonnet-4-6</code>' },
+        { time: '10:30:02', level: 'info', msg: '读取输入数据：来自「需求评审」节点输出' },
+        { time: '10:30:02', level: 'info', msg: '解析任务拆分文档，共 5 个子任务' },
+        { time: '10:30:03', level: 'info', msg: '开始子任务 1/5：Google OAuth 策略实现' },
+        { time: '10:32:15', level: 'success', msg: '子任务 1 完成，生成 <code>google.strategy.ts</code>' },
+        { time: '10:32:16', level: 'info', msg: '开始子任务 2/5：OAuth 回调处理与 Token 管理' },
+        { time: '10:35:42', level: 'success', msg: '子任务 2 完成，生成 <code>oauth.service.ts</code>、<code>oauth.controller.ts</code>' },
+        { time: '10:35:43', level: 'info', msg: '开始子任务 3/5：用户关联与首次登录创建' },
+        { time: '10:37:50', level: 'success', msg: '子任务 3 完成，修改 <code>user.entity.ts</code>' },
+        { time: '10:37:51', level: 'info', msg: '开始子任务 4/5：前端 OAuth 按钮与跳转' },
+        { time: '10:39:20', level: 'info', msg: '跳过：前端任务不在本节点范围内' },
+        { time: '10:39:21', level: 'info', msg: '开始子任务 5/5：DTO 定义与模块注册' },
+        { time: '10:40:55', level: 'success', msg: '子任务 5 完成，生成 <code>oauth-callback.dto.ts</code>' },
+        { time: '10:40:56', level: 'info', msg: '总 Token 消耗：输入 18,300 + 输出 26,900 = 45,200' },
+        { time: '10:40:56', level: 'success', msg: '节点执行完成，总耗时 12分35秒，代码已提交' },
+      ],
+    },
+
+    testing: {
+      icon: 'T', iconBg: '#52c41a', name: '代码自测', status: 'approved', statusLabel: '已通过',
+      config: {
+        nodeType: 'AI 执行',
+        aiModel: 'Claude 4 Sonnet',
+        timeout: '30 分钟',
+        inputSource: '代码开发 → 输出',
+        tokenUsage: '18,600',
+        duration: '4分15秒',
+        prompt: '请为以下代码变更编写单元测试和集成测试：<br>1. 覆盖所有公开方法<br>2. 包含正常流程和异常场景<br>3. Mock 外部依赖<br>4. 目标覆盖率 &gt; 85%',
+        inputData: { source: '代码开发产出', files: ['src/auth/oauth.service.ts', 'src/auth/oauth.controller.ts', 'src/auth/strategies/google.strategy.ts'] },
+        outputData: { summary: '8/8 测试通过 · 覆盖率 87.3%', files: ['src/auth/__tests__/oauth.service.spec.ts', 'src/auth/__tests__/oauth.controller.spec.ts'] },
+      },
+      chat: [
+        { role: 'ai', content: '自动测试生成完成：<br><br><strong>单元测试（8 个用例）：</strong><br>1. 应正确跳转到 OAuth 提供方<br>2. 应正确处理带有效授权码的回调<br>3. 应拒绝无效的 OAuth state<br>4. 首次 OAuth 登录应创建新用户<br>5. 应关联已有账号<br>6. 应正确处理 Token 刷新<br>7. 应优雅处理提供方错误<br>8. 应验证回调地址<br><br><strong>测试结果：</strong>8/8 通过<br><strong>覆盖率：</strong>87.3%' },
+        { role: 'user', content: '覆盖率达标，通过' },
+      ],
+      logs: [
+        { time: '11:00:01', level: 'info', msg: '节点开始执行，使用模型 <code>claude-sonnet-4-6</code>' },
+        { time: '11:00:02', level: 'info', msg: '读取输入数据：来自「代码开发」节点输出' },
+        { time: '11:00:02', level: 'info', msg: '分析代码结构，识别 3 个待测文件' },
+        { time: '11:00:03', level: 'info', msg: '发送 Prompt 到 AI，Token 输入：6,200' },
+        { time: '11:00:30', level: 'success', msg: 'AI 响应完成，Token 输出：12,400，耗时 27.4s' },
+        { time: '11:00:31', level: 'info', msg: '生成 8 个测试用例，开始执行测试' },
+        { time: '11:02:45', level: 'success', msg: '测试执行完成：8/8 通过，覆盖率 87.3%' },
+        { time: '11:02:46', level: 'success', msg: '节点执行完成，总耗时 4分15秒' },
+      ],
+    },
+
+    review: {
+      icon: 'R', iconBg: '#13c2c2', name: '代码 Review', status: 'waiting', statusLabel: '待审批',
+      config: {
+        nodeType: 'AI 执行 + 人工审批',
+        aiModel: 'Claude 4 Sonnet',
+        timeout: '30 分钟',
+        inputSource: '代码自测 → 输出',
+        tokenUsage: '12,450',
+        duration: '4分32秒',
+        prompt: '请审查以下代码变更，关注：<br>1. 代码规范与可读性<br>2. 潜在的安全隐患<br>3. 性能优化建议<br>4. 测试覆盖完整性',
+        inputData: { source: 'PR #47: feature/oauth-login', files: ['src/auth/oauth.service.ts', 'src/auth/oauth.controller.ts', 'src/auth/strategies/google.strategy.ts'] },
+        outputData: { summary: '11/11 测试通过 · 覆盖率 91.2%', files: ['src/auth/__tests__/oauth.service.spec.ts', 'src/auth/__tests__/oauth.controller.spec.ts'] },
+      },
+      chat: [
+        { role: 'ai', content: '我已分析代码变更，并为 OAuth 登录功能生成了以下测试用例：<br><br><strong>单元测试（8 个用例）：</strong><br>1. 应正确跳转到 OAuth 提供方<br>2. 应正确处理带有效授权码的回调<br>3. 应拒绝无效的 OAuth state<br>4. 首次 OAuth 登录应创建新用户<br>5. 应关联已有账号<br>6. 应正确处理 Token 刷新<br>7. 应优雅处理提供方错误<br>8. 应验证回调地址<br><br><strong>测试结果：</strong>8/8 通过<br><strong>覆盖率：</strong>87.3%' },
+        { role: 'user', content: '能否补充 Token 过期场景的边界测试？' },
+        { role: 'ai', content: '好的建议。我已补充 3 个 Token 过期相关的测试用例：<br><br>9. 应处理 access_token 过期<br>10. 应处理 refresh_token 过期<br>11. 应处理两个 Token 同时过期<br><br><strong>更新后结果：</strong>11/11 通过<br><strong>覆盖率：</strong>91.2%<br><br>所有测试已提交到分支 <code>feature/oauth-login</code>。' },
+      ],
+      logs: [
+        { time: '14:23:01', level: 'info', msg: '节点开始执行，使用模型 <code>claude-sonnet-4-6</code>' },
+        { time: '14:23:02', level: 'info', msg: '读取输入数据：来自「代码自测」节点输出' },
+        { time: '14:23:02', level: 'info', msg: '变更文件：<code>oauth.service.ts</code>, <code>oauth.controller.ts</code>, <code>google.strategy.ts</code>' },
+        { time: '14:23:03', level: 'info', msg: '发送 Prompt 到 AI，Token 输入：4,280' },
+        { time: '14:23:15', level: 'success', msg: 'AI 响应完成，Token 输出：8,170，耗时 12.3s' },
+        { time: '14:23:16', level: 'info', msg: '生成代码审查报告，发现 0 个严重问题、2 个建议' },
+        { time: '14:23:16', level: 'warn', msg: '建议：<code>oauth.service.ts:47</code> refresh_token 缺少过期校验' },
+        { time: '14:23:16', level: 'warn', msg: '建议：<code>google.strategy.ts:23</code> 回调 URL 建议使用环境变量配置' },
+        { time: '14:23:17', level: 'success', msg: '节点执行完成，总耗时 4分32秒，等待人工审批' },
+      ],
+    },
+
+    qa: {
+      icon: 'Q', iconBg: '#fa8c16', name: '项目提测', status: 'pending', statusLabel: '待开始',
+      config: {
+        nodeType: 'AI 执行',
+        aiModel: 'GPT-4o',
+        timeout: '45 分钟',
+        inputSource: '代码 Review → 输出',
+        tokenUsage: '—',
+        duration: '—',
+        prompt: '请根据代码变更生成测试计划：<br>1. 功能测试用例<br>2. 回归测试范围<br>3. 边界条件与异常场景<br>4. 性能测试关注点',
+        inputData: { source: '等待上游节点完成', files: [] },
+        outputData: { summary: '等待执行', files: [] },
+      },
+      chat: [
+        { role: 'ai', content: '当前节点处于「待开始」状态，等待上游「代码 Review」节点审批通过后自动触发。<br><br>本节点将自动执行以下操作：<br>1. 根据代码变更生成功能测试用例<br>2. 确定回归测试范围<br>3. 生成测试报告' },
+      ],
+      logs: [
+        { time: '—', level: 'info', msg: '节点尚未执行，等待上游节点完成' },
+      ],
+    },
+
+    deploy: {
+      icon: 'D', iconBg: '#ff4d4f', name: '代码上线', status: 'pending', statusLabel: '待开始',
+      config: {
+        nodeType: 'AI 执行 + 人工审批',
+        aiModel: 'Claude 4 Sonnet',
+        timeout: '30 分钟',
+        inputSource: '项目提测 → 输出',
+        tokenUsage: '—',
+        duration: '—',
+        prompt: '请执行部署前检查：<br>1. 代码分支与环境确认<br>2. 数据库迁移脚本检查<br>3. 环境变量配置验证<br>4. 回滚方案准备',
+        inputData: { source: '等待上游节点完成', files: [] },
+        outputData: { summary: '等待执行', files: [] },
+      },
+      chat: [
+        { role: 'ai', content: '当前节点处于「待开始」状态，等待上游「项目提测」节点完成后自动触发。<br><br>本节点将执行以下操作：<br>1. 部署前环境检查<br>2. 数据库迁移执行<br>3. 灰度发布与验证<br>4. 生成上线报告并等待人工确认' },
+      ],
+      logs: [
+        { time: '—', level: 'info', msg: '节点尚未执行，等待上游节点完成' },
+      ],
+    },
+  };
+
+  /* ========== 渲染函数 ========== */
+  function renderConfig(cfg) {
+    let html = '';
+    // 基本信息
+    html += '<div class="config-section"><div class="config-section-title">基本信息</div>';
+    html += configRow('节点类型', cfg.nodeType);
+    html += configRow('AI 模型', cfg.aiModel);
+    html += configRow('超时设置', cfg.timeout);
+    html += configRow('输入来源', cfg.inputSource);
+    html += '</div>';
+    // 执行数据
+    html += '<div class="config-section"><div class="config-section-title">执行数据</div>';
+    html += configRow('Token 消耗', cfg.tokenUsage);
+    html += configRow('耗时', cfg.duration);
+    html += '</div>';
+    // Prompt 模板
+    html += '<div class="config-section"><div class="config-section-title">Prompt 模板</div>';
+    html += '<div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6; color:#333;">' + cfg.prompt + '</div></div>';
+    // 输入数据
+    html += '<div class="config-section"><div class="config-section-title">输入数据</div>';
+    html += '<div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">';
+    html += '<div style="color:#999; margin-bottom:4px;">来源</div><div>' + cfg.inputData.source + '</div>';
+    if (cfg.inputData.files.length) {
+      html += '<div style="color:#999; margin-top:8px; margin-bottom:4px;">变更文件</div><div>' + cfg.inputData.files.join('<br>') + '</div>';
+    }
+    html += '</div></div>';
+    // 输出数据
+    html += '<div class="config-section"><div class="config-section-title">输出数据</div>';
+    html += '<div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">';
+    html += '<div style="color:#52c41a; font-weight:500;">' + cfg.outputData.summary + '</div>';
+    if (cfg.outputData.files.length) {
+      html += '<div style="color:#999; margin-top:8px; margin-bottom:4px;">生成文件</div><div>' + cfg.outputData.files.join('<br>') + '</div>';
+    }
+    html += '</div></div>';
+    return html;
+  }
+
+  function configRow(label, value) {
+    return '<div class="config-row"><span class="config-label">' + label + '</span><span class="config-value">' + value + '</span></div>';
+  }
+
+  function renderChat(messages) {
+    return messages.map(function(m) {
+      var avatarClass = m.role === 'ai' ? 'ai' : 'user';
+      var avatarText = m.role === 'ai' ? 'AI' : '我';
+      return '<div class="chat-message ' + m.role + '">' +
+        '<div class="chat-avatar ' + avatarClass + '">' + avatarText + '</div>' +
+        '<div class="chat-bubble">' + m.content + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  function renderLogs(entries) {
+    return entries.map(function(e) {
+      var levelClass = e.level;
+      var levelText = e.level === 'success' ? 'OK' : e.level.toUpperCase();
+      return '<div class="log-entry">' +
+        '<span class="log-time">' + e.time + '</span>' +
+        '<span class="log-level ' + levelClass + '">' + levelText + '</span>' +
+        '<span class="log-msg">' + e.msg + '</span>' +
+      '</div>';
+    }).join('');
+  }
+
+  /* ========== 抽屉控制 ========== */
+  function openDrawer(nodeId) {
+    var data = nodeDrawerData[nodeId];
+    if (!data) return;
+
+    // 更新标题
+    document.getElementById('drawerTitle').innerHTML =
+      '<span class="canvas-node-icon" style="background:' + data.iconBg + '; width:24px; height:24px; font-size:12px;">' + data.icon + '</span>' +
+      data.name +
+      '<span class="canvas-node-status ' + data.status + '" style="margin-left:4px;">' + data.statusLabel + '</span>';
+
+    // 填充三个 Tab
+    document.getElementById('configBody').innerHTML = renderConfig(data.config);
+    document.getElementById('chatBody').innerHTML = renderChat(data.chat);
+    document.getElementById('logBody').innerHTML = renderLogs(data.logs);
+
+    // 待审批状态才显示审批区域
+    document.getElementById('chatReview').style.display = data.status === 'waiting' ? 'block' : 'none';
+
+    // 重置到第一个 Tab
+    document.querySelectorAll('.drawer-tab').forEach(function(t, i) { t.classList.toggle('active', i === 0); });
+    document.querySelectorAll('.drawer-tab-panel').forEach(function(p, i) { p.classList.toggle('active', i === 0); });
+
+    // 打开抽屉
     document.getElementById('drawerOverlay').classList.add('open');
     document.getElementById('nodeDrawer').classList.add('open');
   }
