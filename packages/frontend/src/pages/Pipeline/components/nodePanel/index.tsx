@@ -1,6 +1,7 @@
+import { useEffect, useState } from 'react';
 import PageTip from '../../../../components/PageTip';
-import { nodeCategories } from '../../mockData';
-import type { NodeItem } from '../../types';
+import { getNodeCategories } from '../../../../api/workflow';
+import type { NodeCategory, NodeItem } from '../../types';
 import './index.css';
 
 const COLOR_MAP: Record<string, string> = {
@@ -13,6 +14,16 @@ const COLOR_MAP: Record<string, string> = {
 };
 
 export default function NodePanel() {
+  const [nodeCategories, setNodeCategories] = useState<NodeCategory[]>([]);
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      const res = (await getNodeCategories()) as unknown as NodeCategory[];
+      setNodeCategories(res);
+    };
+    fetchCategories();
+  }, []);
+
   const onDragStart = (e: React.DragEvent, node: NodeItem) => {
     e.dataTransfer.setData(
       'application/reactflow',

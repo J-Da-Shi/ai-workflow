@@ -3,12 +3,15 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Project } from './entities/work.entity';
 import { CreateProjectDto } from './dto/create-project.dto';
+import { WorkflowService } from '../workflow/workflow.service';
 
 @Injectable()
 export class WorkService {
   constructor(
     @InjectRepository(Project)
     private projectRepo: Repository<Project>,
+
+    private workflowService: WorkflowService,
   ) {}
 
   // 创建项目
@@ -35,10 +38,11 @@ export class WorkService {
     const totalProjects = await this.projectRepo.count({
       where: { ownerId: userId },
     });
+    const count = await this.workflowService.countByCreator(userId);
     return {
       totalProjects,
       runningWorkflows: 0, // 后续介入 workflow 模块后再查
-      completeWorkflows: 0,
+      completeWorkflows: count,
       pendingReview: 0,
     };
   }

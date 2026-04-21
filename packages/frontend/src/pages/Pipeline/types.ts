@@ -22,9 +22,31 @@ export interface NodeCategory {
   children: NodeItem[];
 }
 
+// Prompt 三层结构
+export interface PromptLayers {
+  system: string;
+  project: string | null;
+  node: string | null;
+  activeLayer: 1 | 2 | 3;
+}
+
+// 节点配置
+export interface NodeConfig {
+  nodeType: string;
+  aiModel: string;
+  timeout: string;
+  inputSource: string;
+  tokenUsage: string;
+  duration: string;
+  promptLayers: PromptLayers;
+  inputData: { source: string; files: string[] };
+  outputData: { summary: string; files: string[] };
+}
+
 // 抽屉
 export interface NodeDrawerProps {
   open: boolean;
-  node: StageNodeData,
+  node: StageNodeData | null;
+  workflowId: string;
   onClose: () => void;
 }

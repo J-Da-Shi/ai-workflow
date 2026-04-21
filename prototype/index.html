@@ -161,6 +161,34 @@
     .config-actions { padding: 16px 20px; border-top: 1px solid #e8e8e8; display: flex; gap: 8px; flex-shrink: 0; }
     .config-actions .toolbar-btn { flex: 1; text-align: center; }
 
+    /* Prompt 三层结构 */
+    .prompt-layers { border: 1px solid #e8e8e8; border-radius: 6px; overflow: hidden; }
+    .prompt-layer { border-bottom: 1px solid #e8e8e8; transition: all 0.2s; }
+    .prompt-layer:last-child { border-bottom: none; }
+    .prompt-layer.selected { background: #f0f7ff; border-left: 3px solid #1890ff; }
+    .prompt-layer-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; cursor: pointer; user-select: none; }
+    .prompt-layer-header:hover { background: rgba(24,144,255,0.04); }
+    .prompt-layer-radio { display: flex; align-items: center; gap: 8px; }
+    .prompt-layer-radio input[type="radio"] { accent-color: #1890ff; width: 14px; height: 14px; cursor: pointer; margin: 0; }
+    .prompt-layer-tag { font-size: 11px; padding: 1px 6px; border-radius: 3px; }
+    .prompt-layer-tag.active { background: #e6f7ff; color: #1890ff; }
+    .prompt-layer-tag.inactive { background: #f5f5f5; color: #999; }
+    .prompt-layer-title { font-size: 12px; font-weight: 500; color: #333; display: flex; align-items: center; gap: 6px; }
+    .prompt-layer-actions { display: flex; align-items: center; gap: 8px; }
+    .prompt-layer-note { font-size: 11px; color: #999; }
+    .prompt-edit-btn { font-size: 11px; color: #1890ff; cursor: pointer; padding: 2px 6px; border-radius: 3px; border: 1px solid transparent; }
+    .prompt-edit-btn:hover { background: #e6f7ff; border-color: #91d5ff; }
+    .prompt-layer-body { padding: 8px 12px 12px; font-size: 12px; line-height: 1.6; color: #333; background: #f6f8fa; }
+    .prompt-layer:not(.selected) .prompt-layer-body { color: #999; }
+    .prompt-layer:not(.selected) .prompt-layer-title { color: #999; }
+    .prompt-layer-textarea { width: 100%; min-height: 80px; padding: 8px 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 12px; line-height: 1.6; font-family: inherit; resize: vertical; outline: none; background: #fff; }
+    .prompt-layer-textarea:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+    .prompt-layer-edit-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+    .prompt-layer-edit-actions button { font-size: 11px; padding: 3px 10px; border-radius: 4px; cursor: pointer; border: 1px solid #d9d9d9; background: #fff; color: #333; }
+    .prompt-layer-edit-actions button.save { background: #1890ff; color: #fff; border-color: #1890ff; }
+    .prompt-layer-edit-actions button.save:hover { background: #40a9ff; }
+    .prompt-layer-edit-actions button.cancel:hover { border-color: #1890ff; color: #1890ff; }
+
     /* 对话 Tab */
     .chat-body { flex: 1; overflow-y: auto; padding: 20px; }
     .chat-message { margin-bottom: 16px; display: flex; gap: 12px; }
@@ -228,6 +256,114 @@
     .annotation strong { color: #d48806; }
 
     .page-label { position: fixed; bottom: 16px; right: 16px; background: #1890ff; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+
+    /* ===== 404 / 403 页面 ===== */
+    .error-page { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 60px); text-align: center; }
+    .error-code { font-size: 120px; font-weight: bold; color: #d9d9d9; line-height: 1; }
+    .error-title { font-size: 24px; color: #333; margin: 16px 0 8px; }
+    .error-desc { font-size: 14px; color: #999; margin-bottom: 24px; }
+
+    /* ===== 项目详情页 ===== */
+    .project-detail { padding: 24px; }
+    .project-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .project-detail-header h2 { font-size: 22px; display: flex; align-items: center; gap: 12px; }
+    .workflow-list { display: flex; flex-direction: column; gap: 12px; }
+    .workflow-card { background: #fff; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: box-shadow 0.2s; }
+    .workflow-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
+    .workflow-card-left { display: flex; align-items: center; gap: 16px; }
+    .workflow-card-icon { width: 40px; height: 40px; border-radius: 8px; background: #e6f7ff; color: #1890ff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
+    .workflow-card-title { font-size: 15px; font-weight: 500; }
+    .workflow-card-desc { font-size: 12px; color: #999; margin-top: 2px; }
+    .workflow-card-right { display: flex; align-items: center; gap: 16px; font-size: 13px; color: #999; }
+    .workflow-progress { display: flex; gap: 4px; align-items: center; }
+    .progress-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .progress-dot.done { background: #52c41a; }
+    .progress-dot.active { background: #1890ff; }
+    .progress-dot.wait { background: #d9d9d9; }
+
+    /* ===== 工作流执行历史 ===== */
+    .history-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .history-table th { text-align: left; padding: 12px 16px; background: #fafafa; font-size: 13px; color: #666; border-bottom: 1px solid #f0f0f0; }
+    .history-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
+    .history-table tr:last-child td { border-bottom: none; }
+    .history-table tr:hover td { background: #fafafa; }
+    .run-status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; padding: 2px 10px; border-radius: 4px; }
+    .run-status.success { background: #f6ffed; color: #52c41a; }
+    .run-status.fail { background: #fff1f0; color: #ff4d4f; }
+    .run-status.running { background: #e6f7ff; color: #1890ff; }
+    .run-status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .run-status.success .run-status-dot { background: #52c41a; }
+    .run-status.fail .run-status-dot { background: #ff4d4f; }
+    .run-status.running .run-status-dot { background: #1890ff; }
+
+    /* ===== Modal 弹窗 ===== */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; justify-content: center; align-items: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: #fff; border-radius: 12px; width: 520px; max-height: 80vh; overflow-y: auto; box-shadow: 0 12px 48px rgba(0,0,0,0.2); }
+    .modal-header { padding: 20px 24px 0; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header h3 { font-size: 18px; margin: 0; }
+    .modal-close { cursor: pointer; color: #999; font-size: 20px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
+    .modal-close:hover { background: #f5f5f5; color: #333; }
+    .modal-body { padding: 20px 24px; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 8px; }
+
+    /* ===== 节点 running 呼吸动画 ===== */
+    .canvas-node.running { animation: nodeBreathing 2s ease-in-out infinite; }
+    @keyframes nodeBreathing {
+      0%, 100% { box-shadow: 0 2px 8px rgba(24,144,255,0.15); }
+      50% { box-shadow: 0 4px 20px rgba(24,144,255,0.4); }
+    }
+    .canvas-node.running::after {
+      content: '';
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #1890ff;
+      animation: runningPulse 1.5s ease-in-out infinite;
+    }
+    @keyframes runningPulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+
+    /* ===== 节点 rejected 红色闪标 ===== */
+    .canvas-node.rejected { border-left-color: #ff4d4f; }
+    .canvas-node.rejected::after {
+      content: '!';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #ff4d4f;
+      color: #fff;
+      font-size: 11px;
+      font-weight: bold;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(255,77,79,0.4);
+    }
+
+    /* ===== Git 凭证卡片 ===== */
+    .git-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+    .git-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .git-card-title { font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+    .git-platform { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+    .git-platform.github { background: #f0f0f0; color: #333; }
+    .git-platform.gitlab { background: #fce8e6; color: #e24329; }
+    .git-row { display: flex; font-size: 13px; margin-bottom: 6px; }
+    .git-row-label { color: #999; width: 80px; flex-shrink: 0; }
+    .git-row-value { color: #333; }
+    .git-row-value code { background: #f5f5f5; padding: 1px 6px; border-radius: 3px; font-size: 12px; font-family: 'SF Mono', monospace; }
+
+    /* ===== 个人信息 ===== */
+    .profile-avatar-section { display: flex; align-items: center; gap: 20px; margin-bottom: 24px; }
+    .profile-avatar-big { width: 72px; height: 72px; border-radius: 50%; background: #1890ff; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 500; }
   </style>
 </head>
 <body>
@@ -287,7 +423,7 @@
       </div>
     </div>
   </div>
-  <div class="page-label">第 1 页 / 共 4 页：登录与注册</div>
+  <div class="page-label">第 1 页 / 共 8 页：登录与注册</div>
 </div>
 
 <!-- ==================== Page 2: 工作台 ==================== -->
@@ -322,7 +458,7 @@
     </div>
 
     <div class="project-list">
-      <div class="project-card" onclick="showPage('pipeline')">
+      <div class="project-card" onclick="showPage('project-detail')">
         <h3>user-center</h3>
         <div class="desc">用户中心微服务，处理注册、登录和个人信息管理</div>
         <div class="meta">
@@ -380,10 +516,192 @@
       </div>
     </div>
   </div>
-  <div class="page-label">第 2 页 / 共 4 页：工作台</div>
+  <div class="page-label">第 2 页 / 共 8 页：工作台</div>
 </div>
 
-<!-- ==================== Page 3: 流水线画布 ==================== -->
+<!-- ==================== Page 3: 项目详情 ==================== -->
+<div class="page" id="page-project-detail">
+  <div class="project-detail">
+    <div class="annotation">
+      <strong>项目详情：</strong>展示该项目下所有工作流列表，可查看执行历史、新建工作流或进入画布编辑。
+    </div>
+
+    <div class="project-detail-header">
+      <h2>
+        <a style="color:#1890ff; cursor:pointer; font-size:14px;" onclick="showPage('dashboard')">← 返回工作台</a>
+        user-center
+        <span class="tag tag-blue" style="font-size:12px; font-weight:normal;">3 个工作流</span>
+      </h2>
+      <button class="btn btn-blue">+ 新建工作流</button>
+    </div>
+
+    <div style="font-size:13px; color:#666; margin-bottom:20px;">用户中心微服务，处理注册、登录和个人信息管理</div>
+
+    <div class="workflow-list">
+      <div class="workflow-card" onclick="showPage('pipeline')">
+        <div class="workflow-card-left">
+          <div class="workflow-card-icon">#3</div>
+          <div>
+            <div class="workflow-card-title">新增 OAuth 登录</div>
+            <div class="workflow-card-desc">添加 Google OAuth 第三方登录支持</div>
+          </div>
+        </div>
+        <div class="workflow-card-right">
+          <div class="workflow-progress">
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot active"></div>
+            <div class="progress-dot wait"></div>
+            <div class="progress-dot wait"></div>
+          </div>
+          <span>5/7 节点</span>
+          <span class="tag tag-orange">进行中</span>
+          <span>2小时前</span>
+          <a style="color:#1890ff; cursor:pointer;" onclick="event.stopPropagation(); showPage('workflow-history')">历史</a>
+        </div>
+      </div>
+
+      <div class="workflow-card">
+        <div class="workflow-card-left">
+          <div class="workflow-card-icon" style="background:#f6ffed; color:#52c41a;">#2</div>
+          <div>
+            <div class="workflow-card-title">修复密码重置 Bug</div>
+            <div class="workflow-card-desc">修复重置密码邮件链接过期时间不正确的问题</div>
+          </div>
+        </div>
+        <div class="workflow-card-right">
+          <div class="workflow-progress">
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+          </div>
+          <span>7/7 节点</span>
+          <span class="tag tag-green">已完成</span>
+          <span>3天前</span>
+          <a style="color:#1890ff; cursor:pointer;" onclick="event.stopPropagation();">历史</a>
+        </div>
+      </div>
+
+      <div class="workflow-card">
+        <div class="workflow-card-left">
+          <div class="workflow-card-icon" style="background:#fff1f0; color:#ff4d4f;">#1</div>
+          <div>
+            <div class="workflow-card-title">用户注册流程重构</div>
+            <div class="workflow-card-desc">将注册流程拆分为分步表单，支持手机号注册</div>
+          </div>
+        </div>
+        <div class="workflow-card-right">
+          <div class="workflow-progress">
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot done"></div>
+            <div class="progress-dot" style="background:#ff4d4f;"></div>
+            <div class="progress-dot wait"></div>
+            <div class="progress-dot wait"></div>
+            <div class="progress-dot wait"></div>
+          </div>
+          <span>3/7 节点</span>
+          <span class="tag" style="background:#fff1f0; color:#ff4d4f;">已驳回</span>
+          <span>1周前</span>
+          <a style="color:#1890ff; cursor:pointer;" onclick="event.stopPropagation();">历史</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="page-label">第 3 页 / 共 8 页：项目详情</div>
+</div>
+
+<!-- ==================== Page 4: 工作流执行历史 ==================== -->
+<div class="page" id="page-workflow-history">
+  <div class="project-detail">
+    <div class="annotation">
+      <strong>执行历史：</strong>每个工作流的历史运行记录列表，方便查看和对比不同运行的执行结果。
+    </div>
+
+    <div class="project-detail-header">
+      <h2>
+        <a style="color:#1890ff; cursor:pointer; font-size:14px;" onclick="showPage('project-detail')">← 返回项目</a>
+        工作流 #3：新增 OAuth 登录 — 执行历史
+      </h2>
+    </div>
+
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>运行 ID</th>
+          <th>触发方式</th>
+          <th>状态</th>
+          <th>节点进度</th>
+          <th>耗时</th>
+          <th>Token 消耗</th>
+          <th>触发时间</th>
+          <th>操作</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="font-family:monospace; color:#1890ff;">#run-0042</td>
+          <td>手动触发</td>
+          <td><span class="run-status running"><span class="run-status-dot"></span>运行中</span></td>
+          <td>5/7</td>
+          <td>29分12秒</td>
+          <td>91,320</td>
+          <td>2026-04-21 10:15:00</td>
+          <td><a style="color:#1890ff; cursor:pointer;" onclick="showPage('pipeline')">查看</a></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace; color:#1890ff;">#run-0041</td>
+          <td>手动触发</td>
+          <td><span class="run-status fail"><span class="run-status-dot"></span>失败</span></td>
+          <td>4/7</td>
+          <td>18分45秒</td>
+          <td>67,800</td>
+          <td>2026-04-20 16:30:00</td>
+          <td><a style="color:#1890ff; cursor:pointer;">查看</a></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace; color:#1890ff;">#run-0040</td>
+          <td>Git Push</td>
+          <td><span class="run-status success"><span class="run-status-dot"></span>成功</span></td>
+          <td>7/7</td>
+          <td>35分20秒</td>
+          <td>112,450</td>
+          <td>2026-04-19 09:10:00</td>
+          <td><a style="color:#1890ff; cursor:pointer;">查看</a></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace; color:#1890ff;">#run-0039</td>
+          <td>定时触发</td>
+          <td><span class="run-status success"><span class="run-status-dot"></span>成功</span></td>
+          <td>7/7</td>
+          <td>28分55秒</td>
+          <td>95,200</td>
+          <td>2026-04-18 08:00:00</td>
+          <td><a style="color:#1890ff; cursor:pointer;">查看</a></td>
+        </tr>
+        <tr>
+          <td style="font-family:monospace; color:#1890ff;">#run-0038</td>
+          <td>手动触发</td>
+          <td><span class="run-status fail"><span class="run-status-dot"></span>失败</span></td>
+          <td>3/7</td>
+          <td>12分10秒</td>
+          <td>42,600</td>
+          <td>2026-04-17 14:22:00</td>
+          <td><a style="color:#1890ff; cursor:pointer;">查看</a></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="page-label">第 4 页 / 共 8 页：工作流执行历史</div>
+</div>
+
+<!-- ==================== Page 5: 流水线画布 ==================== -->
 <div class="page" id="page-pipeline">
   <div class="pipeline-page">
 
@@ -426,7 +744,7 @@
     <div class="canvas-area">
       <div class="canvas-toolbar">
         <div class="canvas-toolbar-left">
-          <a class="back-link" onclick="showPage('dashboard')">← 返回</a>
+          <a class="back-link" onclick="showPage('project-detail')">← 返回</a>
           <h3>user-center</h3>
           <span class="tag tag-blue" style="margin-left: 4px;">工作流 #3：新增 OAuth 登录</span>
         </div>
@@ -548,6 +866,33 @@
 
         </div>
 
+          <!-- 状态演示节点 -->
+          <div style="position:absolute; left:50px; top:360px; font-size:11px; color:#999; background:rgba(255,255,255,0.8); padding:4px 8px; border-radius:4px;">
+            状态演示
+          </div>
+
+          <div class="canvas-node running" style="left: 160px; top: 350px; position: absolute;" onclick="openDrawer('demo-running')">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#1890ff;">C</div>
+              <span class="canvas-node-title">代码开发</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status running">运行中</span>
+              <div class="canvas-node-meta">已耗时 2 分钟…</div>
+            </div>
+          </div>
+
+          <div class="canvas-node rejected" style="left: 400px; top: 350px; position: absolute;" onclick="openDrawer('demo-rejected')">
+            <div class="canvas-node-header">
+              <div class="canvas-node-icon" style="background:#ff4d4f;">R</div>
+              <span class="canvas-node-title">代码 Review</span>
+            </div>
+            <div class="canvas-node-body">
+              <span class="canvas-node-status rejected">已驳回</span>
+              <div class="canvas-node-meta">需修改后重新提交</div>
+            </div>
+          </div>
+
         <!-- 画布空状态（新建工作流时） -->
         <div id="canvas-empty" style="display: none;">
           <div class="empty-state" style="position: absolute; inset: 0; z-index: 1;">
@@ -564,7 +909,7 @@
     </div>
 
   </div>
-  <div class="page-label">第 3 页 / 共 4 页：流水线画布</div>
+  <div class="page-label">第 5 页 / 共 8 页：流水线画布</div>
 </div>
 
 <!-- 节点抽屉（点击画布节点弹出） -->
@@ -614,90 +959,339 @@
   </div>
 </div>
 
-<!-- ==================== Page 5: 系统设置 ==================== -->
+<!-- ==================== Page 6: 系统设置 ==================== -->
 <div class="page" id="page-settings">
   <div class="settings-page">
     <div class="settings-sidebar">
-      <a class="active">AI 模型配置</a>
-      <a>Git 凭证管理</a>
-      <a>个人信息</a>
+      <a class="active" id="settings-tab-ai" onclick="switchSettingsTab('ai')">AI 模型配置</a>
+      <a id="settings-tab-git" onclick="switchSettingsTab('git')">Git 凭证管理</a>
+      <a id="settings-tab-profile" onclick="switchSettingsTab('profile')">个人信息</a>
     </div>
     <div class="settings-content">
-      <div class="annotation">
-        <strong>系统设置：</strong>配置 AI 模型提供商、Git 凭证和个人信息。支持多个 AI 提供商，并可为每个阶段指定不同模型。
-      </div>
 
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h3>AI 模型提供商</h3>
-        <button class="btn btn-blue">+ 添加提供商</button>
-      </div>
+      <!-- AI 模型配置 -->
+      <div id="settings-panel-ai">
+        <div class="annotation">
+          <strong>AI 模型配置：</strong>管理 AI 提供商，并为每个工作流阶段指定不同模型。
+        </div>
 
-      <div class="provider-card">
-        <div class="provider-info">
-          <div class="provider-icon openai">O</div>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>AI 模型提供商</h3>
+          <button class="btn btn-blue" onclick="openModal('providerModal')">+ 添加提供商</button>
+        </div>
+
+        <div class="provider-card">
+          <div class="provider-info">
+            <div class="provider-icon openai">O</div>
+            <div>
+              <div class="provider-name">OpenAI <span class="badge-default">默认</span></div>
+              <div class="provider-model">gpt-4o &middot; https://api.openai.com</div>
+            </div>
+          </div>
           <div>
-            <div class="provider-name">OpenAI <span class="badge-default">默认</span></div>
-            <div class="provider-model">gpt-4o &middot; https://api.openai.com</div>
+            <button class="btn" style="background: #f5f5f5; margin-right: 8px;" onclick="openModal('providerEditModal')">编辑</button>
+            <button class="btn" style="background: #f5f5f5;">删除</button>
           </div>
         </div>
-        <div>
-          <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
-          <button class="btn" style="background: #f5f5f5;">删除</button>
-        </div>
-      </div>
 
-      <div class="provider-card">
-        <div class="provider-info">
-          <div class="provider-icon claude">C</div>
+        <div class="provider-card">
+          <div class="provider-info">
+            <div class="provider-icon claude">C</div>
+            <div>
+              <div class="provider-name">Claude</div>
+              <div class="provider-model">claude-sonnet-4-6 &middot; https://api.anthropic.com</div>
+            </div>
+          </div>
           <div>
-            <div class="provider-name">Claude</div>
-            <div class="provider-model">claude-sonnet-4-6 &middot; https://api.anthropic.com</div>
+            <button class="btn" style="background: #f5f5f5; margin-right: 8px;" onclick="openModal('providerEditModal')">编辑</button>
+            <button class="btn" style="background: #f5f5f5;">删除</button>
           </div>
         </div>
-        <div>
-          <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
-          <button class="btn" style="background: #f5f5f5;">删除</button>
-        </div>
-      </div>
 
-      <div class="provider-card">
-        <div class="provider-info">
-          <div class="provider-icon custom">S</div>
+        <div class="provider-card">
+          <div class="provider-info">
+            <div class="provider-icon custom">S</div>
+            <div>
+              <div class="provider-name">自部署 Qwen</div>
+              <div class="provider-model">qwen-72b &middot; http://10.0.1.50:8080</div>
+            </div>
+          </div>
           <div>
-            <div class="provider-name">自部署 Qwen</div>
-            <div class="provider-model">qwen-72b &middot; http://10.0.1.50:8080</div>
+            <button class="btn" style="background: #f5f5f5; margin-right: 8px;" onclick="openModal('providerEditModal')">编辑</button>
+            <button class="btn" style="background: #f5f5f5;">删除</button>
           </div>
         </div>
-        <div>
-          <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
-          <button class="btn" style="background: #f5f5f5;">删除</button>
+
+        <h3 style="margin-top: 32px; margin-bottom: 16px;">阶段模型分配</h3>
+        <div style="background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
+          <table style="width: 100%; border-collapse: collapse;">
+            <thead>
+              <tr>
+                <th style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #666; font-size: 13px;">阶段</th>
+                <th style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #666; font-size: 13px;">指定模型</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">PRD 审核</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+              <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">需求评审</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+              <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码开发</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option selected>Claude (claude-sonnet-4-6)</option><option>OpenAI (gpt-4o)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+              <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码自测</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option selected>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+              <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码 Review</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option selected>Claude (claude-sonnet-4-6)</option><option>OpenAI (gpt-4o)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+              <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">项目提测</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+              <tr><td style="padding: 10px 12px; font-size: 14px;">代码上线</td><td style="padding: 10px 12px;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <!-- Stage Model Assignment -->
-      <h3 style="margin-top: 32px; margin-bottom: 16px;">阶段模型分配</h3>
-      <div style="background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08);">
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr>
-              <th style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #666; font-size: 13px;">阶段</th>
-              <th style="text-align: left; padding: 8px 12px; border-bottom: 1px solid #f0f0f0; color: #666; font-size: 13px;">指定模型</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">PRD 审核</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">需求评审</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码开发</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option selected>Claude (claude-sonnet-4-6)</option><option>OpenAI (gpt-4o)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码自测</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option selected>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">代码 Review</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option selected>Claude (claude-sonnet-4-6)</option><option>OpenAI (gpt-4o)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-            <tr><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0; font-size: 14px;">项目提测</td><td style="padding: 10px 12px; border-bottom: 1px solid #f0f0f0;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-            <tr><td style="padding: 10px 12px; font-size: 14px;">代码上线</td><td style="padding: 10px 12px;"><select style="padding: 6px 12px; border: 1px solid #d9d9d9; border-radius: 4px;"><option>OpenAI (gpt-4o)</option><option>Claude (claude-sonnet-4-6)</option><option>Qwen (qwen-72b)</option></select></td></tr>
-          </tbody>
-        </table>
+      <!-- Git 凭证管理 -->
+      <div id="settings-panel-git" style="display:none;">
+        <div class="annotation">
+          <strong>Git 凭证管理：</strong>管理 Git 仓库的访问凭证，支持 GitHub 和 GitLab 的 Personal Access Token。
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+          <h3>Git 凭证</h3>
+          <button class="btn btn-blue">+ 添加凭证</button>
+        </div>
+
+        <div class="git-card">
+          <div class="git-card-header">
+            <div class="git-card-title">
+              GitHub — 个人账号
+              <span class="git-platform github">GitHub</span>
+            </div>
+            <div>
+              <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
+              <button class="btn" style="background: #f5f5f5;">删除</button>
+            </div>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">用户名</span>
+            <span class="git-row-value">zhangsan</span>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">Token</span>
+            <span class="git-row-value"><code>ghp_****************************3xK9</code></span>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">权限</span>
+            <span class="git-row-value">repo, workflow, read:org</span>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">状态</span>
+            <span class="git-row-value" style="color:#52c41a;">有效（2026-12-31 过期）</span>
+          </div>
+        </div>
+
+        <div class="git-card">
+          <div class="git-card-header">
+            <div class="git-card-title">
+              GitLab — 公司内网
+              <span class="git-platform gitlab">GitLab</span>
+            </div>
+            <div>
+              <button class="btn" style="background: #f5f5f5; margin-right: 8px;">编辑</button>
+              <button class="btn" style="background: #f5f5f5;">删除</button>
+            </div>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">用户名</span>
+            <span class="git-row-value">zhang.san</span>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">Token</span>
+            <span class="git-row-value"><code>glpat-****************************Yz4M</code></span>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">权限</span>
+            <span class="git-row-value">api, read_repository, write_repository</span>
+          </div>
+          <div class="git-row">
+            <span class="git-row-label">状态</span>
+            <span class="git-row-value" style="color:#fa8c16;">即将过期（2026-05-15）</span>
+          </div>
+        </div>
       </div>
+
+      <!-- 个人信息 -->
+      <div id="settings-panel-profile" style="display:none;">
+        <div class="annotation">
+          <strong>个人信息：</strong>管理你的账号信息和安全设置。
+        </div>
+
+        <h3>个人信息</h3>
+
+        <div class="profile-avatar-section">
+          <div class="profile-avatar-big">张</div>
+          <div>
+            <div style="font-size:16px; font-weight:500; margin-bottom:4px;">张三</div>
+            <div style="font-size:13px; color:#999;">zhangsan@example.com</div>
+            <button class="btn" style="background:#f5f5f5; margin-top:8px; font-size:12px;">更换头像</button>
+          </div>
+        </div>
+
+        <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08); margin-bottom:16px;">
+          <div class="form-group">
+            <label>昵称</label>
+            <input type="text" value="张三" />
+          </div>
+          <div class="form-group">
+            <label>邮箱</label>
+            <input type="email" value="zhangsan@example.com" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>角色</label>
+              <input type="text" value="前端开发工程师" />
+            </div>
+            <div class="form-group">
+              <label>团队</label>
+              <input type="text" value="用户增长组" />
+            </div>
+          </div>
+          <button class="btn btn-blue">保存修改</button>
+        </div>
+
+        <h3 style="margin-top:24px;">安全设置</h3>
+        <div style="background:#fff; border-radius:8px; padding:20px; box-shadow:0 1px 4px rgba(0,0,0,0.08);">
+          <div class="form-group">
+            <label>当前密码</label>
+            <input type="password" placeholder="请输入当前密码" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>新密码</label>
+              <input type="password" placeholder="请输入新密码" />
+            </div>
+            <div class="form-group">
+              <label>确认新密码</label>
+              <input type="password" placeholder="再次输入新密码" />
+            </div>
+          </div>
+          <button class="btn btn-blue">修改密码</button>
+        </div>
+      </div>
+
     </div>
   </div>
-  <div class="page-label">第 4 页 / 共 4 页：系统设置</div>
+  <div class="page-label">第 6 页 / 共 8 页：系统设置</div>
+</div>
+
+<!-- ==================== Page 7: 404 页面 ==================== -->
+<div class="page" id="page-404">
+  <div class="error-page">
+    <div class="error-code">404</div>
+    <div class="error-title">页面未找到</div>
+    <div class="error-desc">你访问的页面不存在或已被移除</div>
+    <button class="btn btn-blue" onclick="showPage('dashboard')">返回工作台</button>
+  </div>
+  <div class="page-label">第 7 页 / 共 8 页：404 / 403 页面</div>
+</div>
+
+<!-- ==================== Page 8: 403 权限不足 ==================== -->
+<div class="page" id="page-403">
+  <div class="error-page">
+    <div class="error-code">403</div>
+    <div class="error-title">权限不足</div>
+    <div class="error-desc">你没有权限访问此页面，请联系管理员或切换账号</div>
+    <div style="display:flex; gap:12px;">
+      <button class="btn btn-blue" onclick="showPage('dashboard')">返回工作台</button>
+      <button class="btn" style="background:#f5f5f5;" onclick="showPage('login')">切换账号</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI 提供商 Modal：添加 ===== -->
+<div class="modal-overlay" id="providerModal" onclick="if(event.target===this)closeModal('providerModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>添加 AI 提供商</h3>
+      <span class="modal-close" onclick="closeModal('providerModal')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>提供商名称</label>
+        <input type="text" placeholder="例如：OpenAI、Claude、自部署模型" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>模型名称</label>
+          <input type="text" placeholder="例如：gpt-4o" />
+        </div>
+        <div class="form-group">
+          <label>模型类型</label>
+          <select style="width:100%; padding:10px 12px; border:1px solid #d9d9d9; border-radius:6px; font-size:14px;">
+            <option>Chat Completion</option>
+            <option>Embedding</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>API Base URL</label>
+        <input type="text" placeholder="https://api.openai.com" />
+      </div>
+      <div class="form-group">
+        <label>API Key</label>
+        <input type="password" placeholder="sk-..." />
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" /> 设为默认提供商
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:#f5f5f5;" onclick="closeModal('providerModal')">取消</button>
+      <button class="btn btn-blue" onclick="closeModal('providerModal')">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== AI 提供商 Modal：编辑 ===== -->
+<div class="modal-overlay" id="providerEditModal" onclick="if(event.target===this)closeModal('providerEditModal')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>编辑 AI 提供商</h3>
+      <span class="modal-close" onclick="closeModal('providerEditModal')">&times;</span>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>提供商名称</label>
+        <input type="text" value="OpenAI" />
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>模型名称</label>
+          <input type="text" value="gpt-4o" />
+        </div>
+        <div class="form-group">
+          <label>模型类型</label>
+          <select style="width:100%; padding:10px 12px; border:1px solid #d9d9d9; border-radius:6px; font-size:14px;">
+            <option selected>Chat Completion</option>
+            <option>Embedding</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>API Base URL</label>
+        <input type="text" value="https://api.openai.com" />
+      </div>
+      <div class="form-group">
+        <label>API Key</label>
+        <input type="password" value="sk-xxxxxxxxxxxxxxxx" />
+      </div>
+      <div class="form-group">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+          <input type="checkbox" checked /> 设为默认提供商
+        </label>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" style="background:#f5f5f5;" onclick="closeModal('providerEditModal')">取消</button>
+      <button class="btn btn-blue" onclick="closeModal('providerEditModal')">保存</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -733,7 +1327,12 @@
         inputSource: '手动上传 PRD 文档',
         tokenUsage: '6,320',
         duration: '3分12秒',
-        prompt: '请审核以下 PRD 文档，关注：<br>1. 需求完整性与清晰度<br>2. 技术可行性评估<br>3. 安全与合规要求<br>4. 是否存在歧义或遗漏',
+        promptLayers: {
+          system: '请审核以下产品需求文档，输出审核报告。',
+          project: '本项目使用 Java + Spring Boot，遵循阿里巴巴编码规范。审核时需关注技术可行性和安全合规。',
+          node: '请审核以下 PRD 文档，关注：<br>1. 需求完整性与清晰度<br>2. 技术可行性评估<br>3. 安全与合规要求<br>4. 是否存在歧义或遗漏',
+          activeLayer: 3,
+        },
         inputData: { source: 'PRD: OAuth 第三方登录需求', files: ['docs/prd-oauth-login-v2.md'] },
         outputData: { summary: '审核通过，2 条建议', files: ['docs/prd-review-report.md'] },
       },
@@ -763,7 +1362,12 @@
         inputSource: 'PRD 审核 → 输出',
         tokenUsage: '8,750',
         duration: '5分08秒',
-        prompt: '请对以下需求进行技术评审，关注：<br>1. 接口设计合理性<br>2. 数据模型设计<br>3. 任务拆分粒度<br>4. 预估工时合理性',
+        promptLayers: {
+          system: '请对输入的需求文档进行技术评审，输出评审报告和任务拆分。',
+          project: '本项目使用 Java + Spring Boot，遵循阿里巴巴编码规范。评审时需关注接口设计和数据模型与现有架构的兼容性。',
+          node: null,
+          activeLayer: 2,
+        },
         inputData: { source: 'PRD 审核通过文档', files: ['docs/prd-oauth-login-v2.md', 'docs/prd-review-report.md'] },
         outputData: { summary: '评审通过，拆分为 5 个子任务', files: ['docs/tech-review-report.md', 'docs/task-breakdown.md'] },
       },
@@ -791,7 +1395,12 @@
         inputSource: '需求评审 → 输出',
         tokenUsage: '45,200',
         duration: '12分35秒',
-        prompt: '根据以下技术评审和任务拆分，实现 OAuth 第三方登录功能：<br>1. 按照任务拆分逐步实现<br>2. 遵循项目代码规范<br>3. 添加必要的错误处理<br>4. 编写内联注释说明关键逻辑',
+        promptLayers: {
+          system: '根据输入的任务拆分文档，逐步实现代码功能。',
+          project: '本项目使用 Java + Spring Boot，遵循阿里巴巴编码规范。编码时使用 Lombok 简化样板代码，异常统一用 GlobalExceptionHandler 处理。',
+          node: '根据以下技术评审和任务拆分，实现 OAuth 第三方登录功能：<br>1. 按照任务拆分逐步实现<br>2. 遵循项目代码规范<br>3. 添加必要的错误处理<br>4. 编写内联注释说明关键逻辑',
+          activeLayer: 3,
+        },
         inputData: { source: '任务拆分文档', files: ['docs/task-breakdown.md', 'docs/tech-review-report.md'] },
         outputData: { summary: '已完成 5 个子任务的代码实现', files: ['src/auth/oauth.service.ts', 'src/auth/oauth.controller.ts', 'src/auth/strategies/google.strategy.ts', 'src/auth/dto/oauth-callback.dto.ts'] },
       },
@@ -827,7 +1436,12 @@
         inputSource: '代码开发 → 输出',
         tokenUsage: '18,600',
         duration: '4分15秒',
-        prompt: '请为以下代码变更编写单元测试和集成测试：<br>1. 覆盖所有公开方法<br>2. 包含正常流程和异常场景<br>3. Mock 外部依赖<br>4. 目标覆盖率 &gt; 85%',
+        promptLayers: {
+          system: '为输入的代码变更自动生成单元测试和集成测试。',
+          project: '本项目使用 JUnit 5 + Mockito，测试文件放在 src/test/java 下，目标覆盖率 &gt; 85%。',
+          node: null,
+          activeLayer: 2,
+        },
         inputData: { source: '代码开发产出', files: ['src/auth/oauth.service.ts', 'src/auth/oauth.controller.ts', 'src/auth/strategies/google.strategy.ts'] },
         outputData: { summary: '8/8 测试通过 · 覆盖率 87.3%', files: ['src/auth/__tests__/oauth.service.spec.ts', 'src/auth/__tests__/oauth.controller.spec.ts'] },
       },
@@ -856,7 +1470,12 @@
         inputSource: '代码自测 → 输出',
         tokenUsage: '12,450',
         duration: '4分32秒',
-        prompt: '请审查以下代码变更，关注：<br>1. 代码规范与可读性<br>2. 潜在的安全隐患<br>3. 性能优化建议<br>4. 测试覆盖完整性',
+        promptLayers: {
+          system: '审查输入的代码变更，输出 Review 报告。',
+          project: '本项目使用 Java + Spring Boot，遵循阿里巴巴编码规范。Review 重点关注 SQL 注入、XSS 和敏感信息泄露。',
+          node: '请审查以下代码变更，关注：<br>1. 代码规范与可读性<br>2. 潜在的安全隐患<br>3. 性能优化建议<br>4. 测试覆盖完整性',
+          activeLayer: 3,
+        },
         inputData: { source: 'PR #47: feature/oauth-login', files: ['src/auth/oauth.service.ts', 'src/auth/oauth.controller.ts', 'src/auth/strategies/google.strategy.ts'] },
         outputData: { summary: '11/11 测试通过 · 覆盖率 91.2%', files: ['src/auth/__tests__/oauth.service.spec.ts', 'src/auth/__tests__/oauth.controller.spec.ts'] },
       },
@@ -887,7 +1506,12 @@
         inputSource: '代码 Review → 输出',
         tokenUsage: '—',
         duration: '—',
-        prompt: '请根据代码变更生成测试计划：<br>1. 功能测试用例<br>2. 回归测试范围<br>3. 边界条件与异常场景<br>4. 性能测试关注点',
+        promptLayers: {
+          system: '根据代码变更自动生成测试计划，包含功能测试、回归测试和性能测试。',
+          project: null,
+          node: null,
+          activeLayer: 1,
+        },
         inputData: { source: '等待上游节点完成', files: [] },
         outputData: { summary: '等待执行', files: [] },
       },
@@ -896,6 +1520,72 @@
       ],
       logs: [
         { time: '—', level: 'info', msg: '节点尚未执行，等待上游节点完成' },
+      ],
+    },
+
+    'demo-running': {
+      icon: 'C', iconBg: '#1890ff', name: '代码开发', status: 'running', statusLabel: '运行中',
+      config: {
+        nodeType: 'AI 执行',
+        aiModel: 'Claude 4 Sonnet',
+        timeout: '60 分钟',
+        inputSource: '需求评审 → 输出',
+        tokenUsage: '12,300（进行中…）',
+        duration: '2分15秒（进行中…）',
+        promptLayers: {
+          system: '根据输入的任务拆分文档，逐步实现代码功能。',
+          project: '本项目使用 Java + Spring Boot，遵循阿里巴巴编码规范。',
+          node: null,
+          activeLayer: 2,
+        },
+        inputData: { source: '任务拆分文档', files: ['docs/task-breakdown.md'] },
+        outputData: { summary: '执行中…', files: [] },
+      },
+      chat: [
+        { role: 'ai', content: '正在执行代码开发任务…<br><br>当前进度：子任务 2/5<br>已完成：Google OAuth 策略实现<br>进行中：OAuth 回调处理与 Token 管理' },
+      ],
+      logs: [
+        { time: '10:30:01', level: 'info', msg: '节点开始执行，使用模型 <code>claude-sonnet-4-6</code>' },
+        { time: '10:30:02', level: 'info', msg: '读取输入数据：来自「需求评审」节点输出' },
+        { time: '10:30:03', level: 'info', msg: '开始子任务 1/5：Google OAuth 策略实现' },
+        { time: '10:32:15', level: 'success', msg: '子任务 1 完成，生成 <code>google.strategy.ts</code>' },
+        { time: '10:32:16', level: 'info', msg: '开始子任务 2/5：OAuth 回调处理与 Token 管理…' },
+      ],
+    },
+
+    'demo-rejected': {
+      icon: 'R', iconBg: '#ff4d4f', name: '代码 Review', status: 'rejected', statusLabel: '已驳回',
+      config: {
+        nodeType: 'AI 执行 + 人工审批',
+        aiModel: 'Claude 4 Sonnet',
+        timeout: '30 分钟',
+        inputSource: '代码自测 → 输出',
+        tokenUsage: '10,800',
+        duration: '3分45秒',
+        promptLayers: {
+          system: '审查输入的代码变更，输出 Review 报告。',
+          project: '本项目使用 Java + Spring Boot，遵循阿里巴巴编码规范。',
+          node: '请审查以下代码变更，关注：<br>1. 代码规范与可读性<br>2. 潜在的安全隐患<br>3. 性能优化建议',
+          activeLayer: 3,
+        },
+        inputData: { source: 'PR #45: feature/user-register-refactor', files: ['src/user/register.service.ts', 'src/user/register.controller.ts'] },
+        outputData: { summary: '发现 2 个严重问题', files: ['docs/review-report-rejected.md'] },
+      },
+      chat: [
+        { role: 'ai', content: '代码审查完成，发现以下问题：<br><br><strong style="color:#ff4d4f;">严重问题（2 个）：</strong><br>1. <code>register.service.ts:72</code> — 密码明文存储，未使用 bcrypt 加密<br>2. <code>register.controller.ts:34</code> — 缺少请求频率限制，存在暴力注册风险<br><br><strong>建议（1 个）：</strong><br>3. 注册成功邮件建议改为异步队列发送<br><br><strong style="color:#ff4d4f;">审查结论：驳回</strong>，请修复上述安全问题后重新提交。' },
+        { role: 'user', content: '收到，马上修复密码加密和限流问题' },
+        { role: 'ai', content: '好的。修复完成后，可以点击「重新提交」触发重新审查。<br><br>建议修复方案：<br>1. 使用 <code>bcrypt.hash(password, 10)</code> 替换明文存储<br>2. 在 Controller 上添加 <code>@Throttle(5, 60)</code> 装饰器限制每分钟 5 次请求' },
+      ],
+      logs: [
+        { time: '15:10:01', level: 'info', msg: '节点开始执行，使用模型 <code>claude-sonnet-4-6</code>' },
+        { time: '15:10:02', level: 'info', msg: '读取输入数据：来自「代码自测」节点输出' },
+        { time: '15:10:03', level: 'info', msg: '发送 Prompt 到 AI，Token 输入：3,600' },
+        { time: '15:10:18', level: 'success', msg: 'AI 响应完成，Token 输出：7,200，耗时 15.1s' },
+        { time: '15:10:19', level: 'error', msg: '发现严重问题：<code>register.service.ts:72</code> 密码明文存储' },
+        { time: '15:10:19', level: 'error', msg: '发现严重问题：<code>register.controller.ts:34</code> 缺少请求频率限制' },
+        { time: '15:10:20', level: 'warn', msg: '建议：注册邮件改为异步队列发送' },
+        { time: '15:10:20', level: 'info', msg: '等待人工审批…' },
+        { time: '15:12:45', level: 'error', msg: '人工审批结果：<strong>驳回</strong> — 存在安全隐患，需修复后重新提交' },
       ],
     },
 
@@ -908,7 +1598,12 @@
         inputSource: '项目提测 → 输出',
         tokenUsage: '—',
         duration: '—',
-        prompt: '请执行部署前检查：<br>1. 代码分支与环境确认<br>2. 数据库迁移脚本检查<br>3. 环境变量配置验证<br>4. 回滚方案准备',
+        promptLayers: {
+          system: '执行部署前检查，包含分支确认、迁移脚本、环境变量和回滚方案。',
+          project: null,
+          node: null,
+          activeLayer: 1,
+        },
         inputData: { source: '等待上游节点完成', files: [] },
         outputData: { summary: '等待执行', files: [] },
       },
@@ -936,9 +1631,10 @@
     html += configRow('Token 消耗', cfg.tokenUsage);
     html += configRow('耗时', cfg.duration);
     html += '</div>';
-    // Prompt 模板
+    // Prompt 模板（三层结构）
     html += '<div class="config-section"><div class="config-section-title">Prompt 模板</div>';
-    html += '<div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6; color:#333;">' + cfg.prompt + '</div></div>';
+    html += renderPromptLayers(cfg.promptLayers);
+    html += '</div>';
     // 输入数据
     html += '<div class="config-section"><div class="config-section-title">输入数据</div>';
     html += '<div style="background:#f6f8fa; padding:10px 12px; border-radius:6px; font-size:12px; line-height:1.6;">';
@@ -960,6 +1656,107 @@
 
   function configRow(label, value) {
     return '<div class="config-row"><span class="config-label">' + label + '</span><span class="config-value">' + value + '</span></div>';
+  }
+
+  var _currentPromptLayerId = null;
+
+  function renderPromptLayers(layers) {
+    var active = layers.activeLayer;
+    _currentPromptLayerId = 'pl_' + Date.now();
+    var groupName = _currentPromptLayerId;
+    var items = [
+      { key: 'node',    label: 'Layer 3：节点级自定义',  note: '仅对当前节点生效', content: layers.node,    level: 3 },
+      { key: 'project', label: 'Layer 2：项目级模板',    note: '对本项目所有节点生效',   content: layers.project, level: 2 },
+      { key: 'system',  label: 'Layer 1：系统内置默认',  note: '开箱即用的通用最佳实践',  content: layers.system,  level: 1 },
+    ];
+    var html = '<div class="prompt-layers" id="' + groupName + '">';
+    items.forEach(function(item) {
+      var isSelected = item.level === active;
+      var cls = isSelected ? ' selected' : '';
+      var tagCls = isSelected ? 'active' : 'inactive';
+      var tagText = isSelected ? '当前使用' : '';
+      var bodyId = groupName + '_body_' + item.key;
+      var contentText = item.content ? item.content.replace(/<br\s*\/?>/gi, '\n').replace(/<[^>]+>/g, '') : '';
+
+      html += '<div class="prompt-layer' + cls + '" data-level="' + item.level + '" id="' + groupName + '_layer_' + item.key + '">';
+      html += '<div class="prompt-layer-header" onclick="selectPromptLayer(\'' + groupName + '\', ' + item.level + ')">';
+      html += '<div class="prompt-layer-radio">';
+      html += '<input type="radio" name="' + groupName + '" value="' + item.level + '"' + (isSelected ? ' checked' : '') + ' onclick="event.stopPropagation(); selectPromptLayer(\'' + groupName + '\', ' + item.level + ')" />';
+      html += '<div class="prompt-layer-title">' + item.label + ' <span class="prompt-layer-tag ' + tagCls + '" id="' + groupName + '_tag_' + item.key + '">' + tagText + '</span></div>';
+      html += '</div>';
+      html += '<div class="prompt-layer-actions">';
+      html += '<span class="prompt-edit-btn" onclick="event.stopPropagation(); togglePromptEdit(\'' + bodyId + '\')">编辑</span>';
+      html += '<span class="prompt-layer-note">' + item.note + '</span>';
+      html += '</div>';
+      html += '</div>';
+
+      html += '<div id="' + bodyId + '">';
+      if (item.content) {
+        html += '<div class="prompt-layer-body" id="' + bodyId + '_display">' + item.content + '</div>';
+      } else {
+        html += '<div class="prompt-layer-body" id="' + bodyId + '_display" style="color:#ccc; font-style:italic;">点击「编辑」添加自定义 Prompt</div>';
+      }
+      html += '<div id="' + bodyId + '_editor" style="display:none; padding:8px 12px 12px; background:#f6f8fa;">';
+      html += '<textarea class="prompt-layer-textarea" id="' + bodyId + '_textarea">' + contentText + '</textarea>';
+      html += '<div class="prompt-layer-edit-actions">';
+      html += '<button class="cancel" onclick="togglePromptEdit(\'' + bodyId + '\')">取消</button>';
+      html += '<button class="save" onclick="savePromptEdit(\'' + bodyId + '\')">保存</button>';
+      html += '</div></div>';
+      html += '</div>';
+
+      html += '</div>';
+    });
+    html += '</div>';
+    return html;
+  }
+
+  function selectPromptLayer(groupId, level) {
+    var container = document.getElementById(groupId);
+    if (!container) return;
+    container.querySelectorAll('.prompt-layer').forEach(function(el) {
+      var elLevel = parseInt(el.getAttribute('data-level'));
+      var isSelected = elLevel === level;
+      el.classList.toggle('selected', isSelected);
+      var tag = el.querySelector('.prompt-layer-tag');
+      if (tag) {
+        tag.className = 'prompt-layer-tag ' + (isSelected ? 'active' : 'inactive');
+        tag.textContent = isSelected ? '当前使用' : '';
+      }
+      var radio = el.querySelector('input[type="radio"]');
+      if (radio) radio.checked = isSelected;
+    });
+  }
+
+  function togglePromptEdit(bodyId) {
+    var display = document.getElementById(bodyId + '_display');
+    var editor = document.getElementById(bodyId + '_editor');
+    if (!display || !editor) return;
+    var isEditing = editor.style.display !== 'none';
+    display.style.display = isEditing ? 'block' : 'none';
+    editor.style.display = isEditing ? 'none' : 'block';
+    if (!isEditing) {
+      var textarea = document.getElementById(bodyId + '_textarea');
+      if (textarea) textarea.focus();
+    }
+  }
+
+  function savePromptEdit(bodyId) {
+    var textarea = document.getElementById(bodyId + '_textarea');
+    var display = document.getElementById(bodyId + '_display');
+    var editor = document.getElementById(bodyId + '_editor');
+    if (!textarea || !display || !editor) return;
+    var val = textarea.value.trim();
+    if (val) {
+      display.style.color = '';
+      display.style.fontStyle = '';
+      display.innerHTML = val.replace(/\n/g, '<br>');
+    } else {
+      display.style.color = '#ccc';
+      display.style.fontStyle = 'italic';
+      display.innerHTML = '点击「编辑」添加自定义 Prompt';
+    }
+    display.style.display = 'block';
+    editor.style.display = 'none';
   }
 
   function renderChat(messages) {
@@ -1023,6 +1820,22 @@
     el.classList.add('active');
     document.querySelectorAll('.drawer-tab-panel').forEach(p => p.classList.remove('active'));
     document.getElementById(panelId).classList.add('active');
+  }
+
+  /* ========== 设置页 Tab 切换 ========== */
+  function switchSettingsTab(tab) {
+    ['ai', 'git', 'profile'].forEach(function(t) {
+      document.getElementById('settings-panel-' + t).style.display = t === tab ? 'block' : 'none';
+      document.getElementById('settings-tab-' + t).classList.toggle('active', t === tab);
+    });
+  }
+
+  /* ========== Modal 弹窗 ========== */
+  function openModal(id) {
+    document.getElementById(id).classList.add('open');
+  }
+  function closeModal(id) {
+    document.getElementById(id).classList.remove('open');
   }
 </script>
 
