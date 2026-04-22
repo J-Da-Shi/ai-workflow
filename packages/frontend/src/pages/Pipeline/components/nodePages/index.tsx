@@ -7,7 +7,6 @@ import {
   addEdge,
   Background,
   Controls,
-  MiniMap,
   useReactFlow,
 } from '@xyflow/react';
 import type { Node, Edge, NodeChange, EdgeChange, Connection } from '@xyflow/react';
@@ -220,7 +219,6 @@ export default function NodePages({ workflowId }: NodePagesProps) {
       >
         <Background />
         <Controls />
-        <MiniMap />
       </ReactFlow>
       <NodeDrawer
         open={drawerOpen}

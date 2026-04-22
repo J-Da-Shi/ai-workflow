@@ -1,4 +1,4 @@
-import { Handle, Position } from '@xyflow/react';
+import { Handle, Position, useReactFlow } from '@xyflow/react';
 import type { NodeProps, Node } from '@xyflow/react';
 import type { StageNodeData } from '../../types';
 import './index.css';
@@ -22,11 +22,19 @@ const COLOR_MAP: Record<string, string> = {
   purple: '#722ed1',
 };
 
-export function StageNode({ data }: NodeProps<StageNode>) {
+export function StageNode({ id, data }: NodeProps<StageNode>) {
+  const { setNodes, setEdges } = useReactFlow();
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setNodes((nds) => nds.filter((n) => n.id !== id));
+    setEdges((eds) => eds.filter((e) => e.source !== id && e.target !== id));
+  };
 
   return (
     <div className={`stage-node ${data.status}`}>
       <Handle type="target" position={Position.Left} />
+      <button className="stage-node-delete" onClick={handleDelete}>×</button>
       <div className="stage-node-header">
         <div
           className="stage-node-icon"

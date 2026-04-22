@@ -4,6 +4,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { AuthModule } from './modules/auth/auth.module';
 import { WorkModule } from './modules/workbench/work.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
+import { AiModule } from './modules/ai/ai.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
     AuthModule,
     WorkModule,
     WorkflowModule,
+    AiModule,
   ],
 })
 export class AppModule {}

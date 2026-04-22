@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button, message } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
 import { updateNodeConfig } from '../../../../api/workflow';
-import './nodeConfig.css';
+import './index.css';
 
 interface ConfigTabProps {
   config: NodeConfig;
@@ -28,7 +28,7 @@ const LAYER_ITEMS: {
 
 export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProps) {
   // ─── 状态 ───
-  const [activeLayer, setActiveLayer] = useState(config.promptLayers.activeLayer);  // 当前选中的生效层级
+  const [activeLayer, setActiveLayer] = useState(config.promptLayers?.activeLayer);  // 当前选中的生效层级
   const [editingKey, setEditingKey] = useState<string | null>(null);                // 正在编辑的层 key（null 表示未编辑）
   const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });   // 三层 Prompt 内容（本地副本）
   const [editText, setEditText] = useState('');                                     // textarea 中的临时编辑文本
@@ -208,8 +208,8 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
           <div className="config-section-title">输入数据</div>
           <div className="config-data-block">
             <div className="config-data-label">来源</div>
-            <div>{config.inputData.source}</div>
-            {config.inputData.files.length > 0 && (
+            <div>{config.inputData?.source}</div>
+            {config.inputData?.files.length > 0 && (
               <>
                 <div className="config-data-label" style={{ marginTop: 8 }}>变更文件</div>
                 <div className="config-file-list">
@@ -226,12 +226,12 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
         <div className="config-section">
           <div className="config-section-title">输出数据</div>
           <div className="config-data-block">
-            <div className="config-data-summary">{config.outputData.summary}</div>
-            {config.outputData.files.length > 0 && (
+            <div className="config-data-summary">{config.outputData?.summary}</div>
+            {config.outputData?.files.length > 0 && (
               <>
                 <div className="config-data-label" style={{ marginTop: 8 }}>生成文件</div>
                 <div className="config-file-list">
-                  {config.outputData.files.map((f) => (
+                  {config.outputData?.files.map((f) => (
                     <div key={f} className="config-file-item">{f}</div>
                   ))}
                 </div>

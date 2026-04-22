@@ -25,4 +25,12 @@ export const getNodeConfig = (workflowId: string, nodeKey: string) =>
 export const updateNodeConfig = (workflowId: string, nodeKey: string, data: any) =>
     request.put(`/workflows/${workflowId}/nodes/${nodeKey}/config`, data);
 export const deleteNodeConfig = (workflowId: string, nodeKey: string) =>
-    request.delete(`/workflows/${workflowId}/nodes/${nodeKey}`);  
+    request.delete(`/workflows/${workflowId}/nodes/${nodeKey}`);
+
+// 获取对话历史                                                                                                                                      
+export const getChatHistory = (workflowId: string, nodeKey: string) =>
+    request.get(`/ai/chat-history/${workflowId}/${nodeKey}`);
+
+// 清空对话历史                                                                                                                                      
+export const clearChatHistory = (workflowId: string, nodeKey: string) =>
+    request.delete(`/ai/chat-history/${workflowId}/${nodeKey}`);   

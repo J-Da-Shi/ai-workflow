@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Tabs, Drawer, Spin } from 'antd';
 import type { NodeDrawerProps, NodeConfig } from '../../types';
 import { getNodeConfig } from '../../../../api/workflow';
-import ConfigTab from './nodeConfig';
+import ConfigTab from '../nodeConfig';
+import ChatTab from '../nodeChat';
 import './index.css';
 
 const STATUS_LABEL: Record<string, string> = {
@@ -92,7 +93,7 @@ export default function NodeDrawer({
             {
               key: 'chat',
               label: 'AI 对话',
-              children: <div>对话内容占位</div>,
+              children: <ChatTab workflowId={workflowId} nodeKey={node.key}/>,
             },
             {
               key: 'logs',
