@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { Button, message } from 'antd';
+import { Button, Switch, message } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
-import { updateNodeConfig } from '../../../../api/workflow';
+import { updateNodeConfig, executeNode } from '../../../../api/workflow';
 import './index.css';
 
 interface ConfigTabProps {
@@ -32,6 +32,20 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
   const [editingKey, setEditingKey] = useState<string | null>(null);                // 正在编辑的层 key（null 表示未编辑）
   const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });   // 三层 Prompt 内容（本地副本）
   const [editText, setEditText] = useState('');                                     // textarea 中的临时编辑文本
+  const [executing, setExecuting] = useState(false);                                // 是否正在执行
+
+  // ─── 执行节点 ───
+  const handleExecuteNode = async () => {
+    setExecuting(true);
+    try {
+      await executeNode(workflowId, nodeKey);
+      message.success('节点执行完成');
+    } catch {
+      message.error('节点执行失败');
+    } finally {
+      setExecuting(false);
+    }
+  };
 
   // ─── Prompt 编辑操作 ───
 
@@ -84,6 +98,17 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
           <div className="config-row">
             <span className="config-label">输入来源</span>
             <span className="config-value">{config.inputSource}</span>
+          </div>
+          <div className="config-row">
+            <span className="config-label">需要审批</span>
+            <span className="config-value">
+              <Switch
+                defaultChecked={config.requireApproval !== false}
+                onChange={(checked) => {
+                  updateNodeConfig(workflowId, nodeKey, { requireApproval: checked });
+                }}
+              />
+            </span>
           </div>
         </div>
 
@@ -243,8 +268,8 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
 
       {/* 底部操作栏：重新执行 / 执行节点 */}
       <div className="config-actions">
-        <Button style={{ flex: 1 }}>重新执行</Button>
-        <Button type="primary" style={{ flex: 1 }}>执行节点</Button>
+        <Button style={{ flex: 1 }} onClick={handleExecuteNode} loading={executing}>重新执行</Button>
+        <Button type="primary" style={{ flex: 1 }} onClick={handleExecuteNode} loading={executing}>执行节点</Button>
       </div>
     </div>
   );

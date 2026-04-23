@@ -10,6 +10,8 @@ export interface StageNodeData extends Record<string, unknown> {
   color: NodeColor;
   status: NodeStatus;
   meta?: string;
+  summary?: string;
+  workflowId?: string;
 }
 
 // 节点面板中的可拖拽项（不含运行时状态）
@@ -38,9 +40,24 @@ export interface NodeConfig {
   inputSource: string;
   tokenUsage: string;
   duration: string;
+  requireApproval: boolean;
   promptLayers: PromptLayers;
   inputData: { source: string; files: string[] };
   outputData: { summary: string; files: string[] };
+}
+
+// 节点执行记录
+export interface NodeExecution {
+  id: string;
+  workflowId: string;
+  nodeKey: string;
+  status: NodeStatus;
+  input: string | null;
+  output: string | null;
+  summary: string | null;
+  error: string | null;
+  startedAt: string | null;
+  completedAt: string | null;
 }
 
 // 抽屉

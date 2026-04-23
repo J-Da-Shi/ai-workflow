@@ -66,6 +66,9 @@ export class WorkflowNode {
     activeLayer: 1 | 2 | 3;
   };
 
+  @Column({ default: true })
+  requireApproval: boolean;
+
   @Column({ type: 'json', nullable: true })
   inputData: { source: string; files: string[] };
 

@@ -12,10 +12,10 @@ import {
 import type { Node, Edge, NodeChange, EdgeChange, Connection } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Button, message } from 'antd';
-import type { StageNodeData } from '../../types';
+import type { StageNodeData, NodeExecution } from '../../types';
 import { stageNode } from './../stageNode/nodeTypes';
 import { stageEdge } from '../stageEdge/edgeTypes';
-import { getCanvas, updateCanvas, createNodeConfig } from '../../../../api/workflow';
+import { getCanvas, updateCanvas, createNodeConfig, executeWorkflow, getExecutions } from '../../../../api/workflow';
 import './index.css';
 import NodeDrawer from '../nodeDrawer';
 
@@ -44,7 +44,27 @@ export default function NodePages({ workflowId }: NodePagesProps) {
         edges: Edge[];
       };
       if (res) {
-        setNodes(res.nodes || []);
+        // 给每个节点补上 workflowId，供 StageNode 审批按钮使用
+        const loadedNodes = (res.nodes || []).map((n: Node) => ({
+          ...n,
+          data: { ...n.data, workflowId },
+        }));
+
+        // 加载执行状态，同步到节点上
+        try {
+          const executions = (await getExecutions(workflowId)) as unknown as NodeExecution[];
+          if (executions && executions.length > 0) {
+            loadedNodes.forEach((n: Node) => {
+              const exec = executions.find((e) => e.nodeKey === (n.data as StageNodeData).key);
+              if (exec) {
+                (n.data as StageNodeData).status = exec.status as StageNodeData['status'];
+                (n.data as StageNodeData).summary = exec.summary || '';
+              }
+            });
+          }
+        } catch { /* 首次加载可能没有执行记录 */ }
+
+        setNodes(loadedNodes);
         setEdges(res.edges || []);
       }
     };
@@ -97,7 +117,7 @@ export default function NodePages({ workflowId }: NodePagesProps) {
 
       const { name, icon, color, key } = JSON.parse(raw);
       const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      const data: StageNodeData = { name, key, icon, color, status: 'pending' };
+      const data: StageNodeData = { name, key, icon, color, status: 'pending', workflowId };
 
       const newNode: Node = {
         id: `node_${Date.now()}`,
@@ -177,8 +197,111 @@ export default function NodePages({ workflowId }: NodePagesProps) {
     setHistoryIndex((i) => i + 1);
   }, [history, historyIndex])
 
-  /** 运行工作流（待实现） */
-  const run = () => { };
+  /** 同步执行状态到画布节点 */
+  const syncExecutions = useCallback(async () => {
+    const executions = (await getExecutions(workflowId)) as unknown as NodeExecution[];
+    if (!executions || executions.length === 0) return;
+    setNodes((nds) =>
+      nds.map((n) => {
+        const exec = executions.find((e) => e.nodeKey === (n.data as StageNodeData).key);
+        if (exec) {
+          return {
+            ...n,
+            data: { ...n.data, status: exec.status, summary: exec.summary || '' },
+          };
+        }
+        return n;
+      }),
+    );
+  }, [workflowId, setNodes]);
+
+  /** 轮询节点执行状态 */
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  /** 连续无变化计数，用于自动停止轮询 */
+  const noChangeCountRef = useRef(0);
+
+  const startPolling = useCallback(() => {
+    // 避免重复启动
+    if (pollTimerRef.current) return;
+    noChangeCountRef.current = 0;
+    pollTimerRef.current = setInterval(async () => {
+      try {
+        const executions = (await getExecutions(workflowId)) as unknown as NodeExecution[];
+        if (!executions || executions.length === 0) return;
+
+        let hasChange = false;
+        setNodes((nds) =>
+          nds.map((n) => {
+            const exec = executions.find((e) => e.nodeKey === (n.data as StageNodeData).key);
+            if (exec) {
+              const prevStatus = (n.data as StageNodeData).status;
+              const prevSummary = (n.data as StageNodeData).summary;
+              if (prevStatus !== exec.status || prevSummary !== (exec.summary || '')) {
+                hasChange = true;
+              }
+              return {
+                ...n,
+                data: { ...n.data, status: exec.status, summary: exec.summary || '' },
+              };
+            }
+            return n;
+          }),
+        );
+
+        // 连续 10 次轮询（30 秒）没有变化，自动停止
+        if (!hasChange) {
+          noChangeCountRef.current += 1;
+        } else {
+          noChangeCountRef.current = 0;
+        }
+        if (noChangeCountRef.current >= 10 && pollTimerRef.current) {
+          clearInterval(pollTimerRef.current);
+          pollTimerRef.current = null;
+        }
+      } catch {
+        // 轮询请求失败时不停止，等下次重试
+      }
+    }, 3000);
+  }, [workflowId, setNodes]);
+
+  const stopPolling = useCallback(() => {
+    if (pollTimerRef.current) {
+      clearInterval(pollTimerRef.current);
+      pollTimerRef.current = null;
+    }
+  }, []);
+
+  // 监听 StageNode 审批通过后的事件
+  useEffect(() => {
+    const handleStartPoll = () => startPolling();
+    const handleSync = () => {
+      stopPolling();
+      syncExecutions();
+    };
+    window.addEventListener('start-poll-executions', handleStartPoll);
+    window.addEventListener('sync-executions', handleSync);
+    return () => {
+      window.removeEventListener('start-poll-executions', handleStartPoll);
+      window.removeEventListener('sync-executions', handleSync);
+      stopPolling();
+    };
+  }, [startPolling, stopPolling, syncExecutions]);
+
+  /** 运行工作流 */
+  const run = useCallback(async () => {
+    message.info('工作流开始运行');
+    startPolling();
+    try {
+      await executeWorkflow(workflowId);
+      message.success('工作流执行完成');
+    } catch {
+      message.error('工作流执行失败');
+    } finally {
+      stopPolling();
+      syncExecutions();
+    }
+  }, [workflowId, startPolling, stopPolling, syncExecutions]);
 
   // ─── 节点交互 ───
 

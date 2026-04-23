@@ -111,4 +111,16 @@ export class AiService {
       }),
     );
   }
+
+  async callAI(
+    systemPrompt: string,
+    messages: { role: 'user' | 'assistant'; content: string }[],
+  ) {
+    const response = await this.openai.chat.completions.create({
+      model: process.env.AI_MODEL || 'deepseek-chat',
+      messages: [{ role: 'system', content: systemPrompt }, ...messages],
+    });
+
+    return response.choices[0]?.message?.content || '';
+  }
 }

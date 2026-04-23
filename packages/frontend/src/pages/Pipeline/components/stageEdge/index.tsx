@@ -87,6 +87,7 @@ export function StageEdge({
         stroke: color,
         strokeWidth: 2,
         strokeDasharray: isDashed ? '6 4' : undefined,
+        animation: isDashed ? 'edge-flow 0.6s linear infinite' : undefined,
       }}
     />
   );

@@ -102,3 +102,56 @@
   color: #999;
   margin-top: 6px;
 }
+
+/* 审批区域 */
+.stage-node-approval {
+  padding: 8px 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.stage-node-summary {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 8px;
+  line-height: 1.4;
+  max-height: 40px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stage-node-approval-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.stage-node-approval-actions button {
+  flex: 1;
+  padding: 2px 0;
+  border-radius: 4px;
+  border: none;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.approve-btn {
+  background: #52c41a;
+  color: #fff;
+}
+
+.approve-btn:hover {
+  background: #73d13d;
+}
+
+.reject-btn {
+  background: #fff1f0;
+  color: #ff4d4f;
+  border: 1px solid #ffccc7 !important;
+}
+
+.reject-btn:hover {
+  background: #fff2f0;
+}
+
+/* failed 状态 */
+.stage-node.failed { border-left-color: #ff4d4f; }
+.stage-node-status.failed { background: #fff1f0; color: #ff4d4f; }

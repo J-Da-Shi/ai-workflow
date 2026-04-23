@@ -5,6 +5,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { WorkModule } from './modules/workbench/work.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
 import { AiModule } from './modules/ai/ai.module';
+import { ExecutionModule } from './modules/execution/execution.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { AiModule } from './modules/ai/ai.module';
     WorkModule,
     WorkflowModule,
     AiModule,
+    ExecutionModule,
   ],
 })
 export class AppModule {}
