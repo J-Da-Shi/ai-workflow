@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Switch, message } from 'antd';
+import { Button, Switch, message, Select } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
 import { updateNodeConfig, executeNode } from '../../../../api/workflow';
 import './index.css';
@@ -21,10 +21,10 @@ const LAYER_ITEMS: {
   note: string;
   level: 1 | 2 | 3;
 }[] = [
-  { key: 'node', label: 'Layer 3：节点级自定义', note: '仅对当前节点生效', level: 3 },
-  { key: 'project', label: 'Layer 2：项目级模板', note: '对本项目所有节点生效', level: 2 },
-  { key: 'system', label: 'Layer 1：系统内置默认', note: '开箱即用的通用最佳实践', level: 1 },
-];
+    { key: 'node', label: 'Layer 3：节点级自定义', note: '仅对当前节点生效', level: 3 },
+    { key: 'project', label: 'Layer 2：项目级模板', note: '对本项目所有节点生效', level: 2 },
+    { key: 'system', label: 'Layer 1：系统内置默认', note: '开箱即用的通用最佳实践', level: 1 },
+  ];
 
 export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProps) {
   // ─── 状态 ───
@@ -33,6 +33,7 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
   const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });   // 三层 Prompt 内容（本地副本）
   const [editText, setEditText] = useState('');                                     // textarea 中的临时编辑文本
   const [executing, setExecuting] = useState(false);                                // 是否正在执行
+  const [aiProvider, setAiProvider] = useState(config.aiProvider || 'default');  // AI 提供者选择状态，config.aiProvider 可能是 undefined（老节点没有这个字段），默认用 default
 
   // ─── 执行节点 ───
   const handleExecuteNode = async () => {
@@ -98,6 +99,27 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
           <div className="config-row">
             <span className="config-label">输入来源</span>
             <span className="config-value">{config.inputSource}</span>
+          </div>
+          {/* AI 提供者选择：决定节点用哪个 AI 引擎执行 */}
+          <div className="config-row">
+            <span className="config-label">AI 提供者</span>
+            <span className="config-value">
+              <Select
+                value={aiProvider}
+                style={{ width: 200 }}
+                onChange={(value) => {
+                  // 更新本地状态                                                                                                                                                                 
+                  setAiProvider(value);
+                  // 持久化到后端 — 调用已有的 updateNodeConfig API                                                                                                                               
+                  updateNodeConfig(workflowId, nodeKey, { aiProvider: value });
+                }}
+              >
+                {/* 默认选项：使用 OpenAI/DeepSeek，只做文本生成 */}
+                <Select.Option value="default">默认 AI（文本生成）</Select.Option>
+                {/* AI 代码生成：解析 AI 输出的代码块并写入文件 */}
+                <Select.Option value="claude-agent">AI 代码生成（可写入文件）</Select.Option>
+              </Select>
+            </span>
           </div>
           <div className="config-row">
             <span className="config-label">需要审批</span>
@@ -191,11 +213,11 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
                     <div className={`prompt-layer-body${!content ? ' empty' : ''}`}>
                       {content
                         ? content.split('\n').map((line, i) => (
-                            <span key={i}>
-                              {i > 0 && <br />}
-                              {line}
-                            </span>
-                          ))
+                          <span key={i}>
+                            {i > 0 && <br />}
+                            {line}
+                          </span>
+                        ))
                         : '点击「编辑」添加自定义 Prompt'}
                     </div>
                   )}

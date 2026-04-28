@@ -1,5 +1,12 @@
 import { useEffect, useState, useRef } from "react";
 import { getChatHistory, clearChatHistory } from "../../../../api/workflow";
+// Markdown 渲染：将 AI 回复的 Markdown 文本渲染为 HTML                                                                                                                                 
+import ReactMarkdown from 'react-markdown';
+// GitHub Flavored Markdown 插件：支持表格、删除线、任务列表                                                                                                                            
+import remarkGfm from 'remark-gfm';
+// 复用 Step 1 安装的语法高亮组件，用于渲染 Markdown 中的代码块                                                                                                                         
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import './index.css';
 
 interface ChatMessage {
@@ -76,16 +83,6 @@ export default function ChatTab({ workflowId, nodeKey }: ChatTabProps) {
         setLoading(false);
     };
 
-    const onChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        setInput(e.target.value);
-    }
-
-    const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-        if (e.keyCode === 13) {
-            handleSend()
-        }
-    }
-
     // 清空对话                                                                                                                                        
     const handleClear = async () => {
         clearChatHistory(workflowId, nodeKey);
@@ -97,13 +94,60 @@ export default function ChatTab({ workflowId, nodeKey }: ChatTabProps) {
             <div className="chat-messages">
                 {messages.map((msg, i) => (
                     <div key={i} className={`chat-message ${msg.role}`}>
-                        {msg.content}
+                        {msg.role === 'assistant' ? (
+                            // assistant 消息用 Markdown 渲染                                                                                                                           
+                            <ReactMarkdown
+                                remarkPlugins={[remarkGfm]}
+                                components={{
+                                    // 自定义代码块渲染：用 SyntaxHighlighter 替代默认的 <code>                                                                                         
+                                    code({ className, children, ...props }) {
+                                        // className 格式为 "language-xxx"，提取语言名                                                                                                  
+                                        const match = /language-(\w+)/.exec(className || '');
+                                        // 判断是否是多行代码块（而不是行内 `code`）                                                                                                    
+                                        const isBlock = String(children).includes('\n');
+                                        return match && isBlock ? (
+                                            <SyntaxHighlighter
+                                                style={vscDarkPlus}
+                                                language={match[1]}
+                                                PreTag="div"
+                                            >
+                                                {/* 去掉末尾多余的换行符 */}
+                                                {String(children).replace(/\n$/, '')}
+                                            </SyntaxHighlighter>
+                                        ) : (
+                                            // 行内代码：保持默认的 <code> 标签                                                                                                         
+                                            <code className={className} {...props}>
+                                                {children}
+                                            </code>
+                                        );
+                                    },
+                                }}
+                            >
+                                {msg.content}
+                            </ReactMarkdown>
+                        ) : (
+                            // 用户消息保持纯文本                                                                                                                                       
+                            msg.content
+                        )}
                     </div>
                 ))}
                 <div ref={messagesEndRef} />
             </div>
             <div className="chat-input-area">
-                <input value={input} onChange={onChange} onKeyDown={onKeyDown} />
+                {/* textarea 替代 input：支持多行输入 */}
+                <textarea
+                    value={input}
+                    onChange={(e) => setInput(e.target.value)}
+                    onKeyDown={(e) => {
+                        // Enter 发送，Shift+Enter 换行                                                                                                                                 
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleSend();
+                        }
+                    }}
+                    placeholder="输入消息...（Shift+Enter 换行）"
+                    rows={2}
+                />
                 <button onClick={handleSend} disabled={loading}>发送</button>
                 <button onClick={handleClear}>清空</button>
             </div>

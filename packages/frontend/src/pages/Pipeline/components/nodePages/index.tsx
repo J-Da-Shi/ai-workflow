@@ -221,6 +221,9 @@ export default function NodePages({ workflowId }: NodePagesProps) {
   /** 连续无变化计数，用于自动停止轮询 */
   const noChangeCountRef = useRef(0);
 
+  /** 上一次轮询拿到的状态快照，用于检测变化 */
+  const lastPollRef = useRef<string>('');
+
   const startPolling = useCallback(() => {
     // 避免重复启动
     if (pollTimerRef.current) return;
@@ -230,16 +233,20 @@ export default function NodePages({ workflowId }: NodePagesProps) {
         const executions = (await getExecutions(workflowId)) as unknown as NodeExecution[];
         if (!executions || executions.length === 0) return;
 
-        let hasChange = false;
+        // 用 JSON 快照检测变化（简单可靠）
+        const snapshot = JSON.stringify(executions.map((e) => `${e.nodeKey}:${e.status}:${e.summary || ''}`));
+        if (snapshot !== lastPollRef.current) {
+          lastPollRef.current = snapshot;
+          noChangeCountRef.current = 0;
+        } else {
+          noChangeCountRef.current += 1;
+        }
+
+        // 更新节点状态
         setNodes((nds) =>
           nds.map((n) => {
             const exec = executions.find((e) => e.nodeKey === (n.data as StageNodeData).key);
             if (exec) {
-              const prevStatus = (n.data as StageNodeData).status;
-              const prevSummary = (n.data as StageNodeData).summary;
-              if (prevStatus !== exec.status || prevSummary !== (exec.summary || '')) {
-                hasChange = true;
-              }
               return {
                 ...n,
                 data: { ...n.data, status: exec.status, summary: exec.summary || '' },
@@ -249,16 +256,24 @@ export default function NodePages({ workflowId }: NodePagesProps) {
           }),
         );
 
-        // 连续 10 次轮询（30 秒）没有变化，自动停止
-        if (!hasChange) {
-          noChangeCountRef.current += 1;
-        } else {
-          noChangeCountRef.current = 0;
-        }
-        if (noChangeCountRef.current >= 10 && pollTimerRef.current) {
-          clearInterval(pollTimerRef.current);
-          pollTimerRef.current = null;
-        }
+        // 判断是否还有节点在执行中                                                                                                                                                     
+          // hasRunning 为 true 说明工作流还在跑，不管有没有变化都不能停
+          const hasRunning = executions.some((e) => e.status === 'running');                                                                                                              
+                                                                                                                                                                                          
+          if (hasRunning) {                                                                                                                                                               
+            // 有节点在运行中 → 重置计数器，继续轮询                                                                                                                                      
+            // 即使状态快照没变（一直是 running），也不能停                                                                                                                               
+            noChangeCountRef.current = 0;                                                                                                                                                 
+          }                                                                                                                                                                               
+                                                                                                                                                                                          
+          // 只有在没有 running 节点的情况下，连续 10 次无变化才停止                                                                                                                      
+          // 这样确保：                                                                                                                                                                   
+          // - 节点执行中（running）→ 永不停止                                                                                                                                            
+          // - 节点执行完（waiting/approved/...）→ 30 秒无变化后停止                                                                                                                      
+          if (!hasRunning && noChangeCountRef.current >= 10 && pollTimerRef.current) {                                                                                                    
+            clearInterval(pollTimerRef.current);                                                                                                                                          
+            pollTimerRef.current = null;                                                                                                                                                  
+          }  
       } catch {
         // 轮询请求失败时不停止，等下次重试
       }

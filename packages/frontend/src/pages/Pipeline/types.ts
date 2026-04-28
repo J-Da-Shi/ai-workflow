@@ -1,4 +1,4 @@
-export type NodeStatus = 'pending' | 'running' | 'waiting' | 'approved' | 'rejected';
+export type NodeStatus = 'pending' | 'running' | 'waiting' | 'approved' | 'rejected' | 'failed';
 
 export type NodeColor = 'blue' | 'green' | 'cyan' | 'orange' | 'red' | 'purple';
 
@@ -35,8 +35,8 @@ export interface PromptLayers {
 // 节点配置
 export interface NodeConfig {
   nodeType: string;
-  aiModel: string;
-  timeout: string;
+  aiModel?: string;
+  timeout?: string;
   inputSource: string;
   tokenUsage: string;
   duration: string;
@@ -44,6 +44,7 @@ export interface NodeConfig {
   promptLayers: PromptLayers;
   inputData: { source: string; files: string[] };
   outputData: { summary: string; files: string[] };
+  aiProvider?: string;
 }
 
 // 节点执行记录

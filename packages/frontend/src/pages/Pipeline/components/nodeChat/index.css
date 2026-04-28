@@ -22,14 +22,15 @@
   font-size: 14px;
   line-height: 1.6;
   word-break: break-word;
-  white-space: pre-wrap;
 }
 
+/* 用户消息保留 pre-wrap（纯文本需要保留换行） */
 .chat-message.user {
   align-self: flex-end;
   background: #1890ff;
   color: #fff;
   border-bottom-right-radius: 4px;
+  white-space: pre-wrap;
 }
 
 .chat-message.assistant {
@@ -89,4 +90,87 @@
 .chat-input-area button:last-of-type:hover {
   border-color: #ff4d4f;
   color: #ff4d4f;
+}
+
+/* ─── Markdown 渲染样式（assistant 消息内） ─── */
+
+/* Markdown 内容默认会有 <p> 标签的 margin，在聊天气泡里太大了 */
+.chat-message.assistant p {
+  margin: 0 0 8px 0;
+}
+
+.chat-message.assistant p:last-child {
+  margin-bottom: 0;
+}
+
+/* 代码块容器 */
+.chat-message.assistant pre {
+  margin: 8px 0;
+  border-radius: 6px;
+  overflow: auto;
+}
+
+/* 行内代码 */
+.chat-message.assistant code {
+  background: rgba(0, 0, 0, 0.06);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+}
+
+/* 代码块里的 code 不需要额外背景色（SyntaxHighlighter 已处理） */
+.chat-message.assistant pre code {
+  background: none;
+  padding: 0;
+}
+
+/* 列表 */
+.chat-message.assistant ul,
+.chat-message.assistant ol {
+  margin: 4px 0;
+  padding-left: 20px;
+}
+
+/* 表格 */
+.chat-message.assistant table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.chat-message.assistant th,
+.chat-message.assistant td {
+  border: 1px solid #d9d9d9;
+  padding: 4px 8px;
+}
+
+.chat-message.assistant th {
+  background: #fafafa;
+}
+
+/* 标题在气泡里不需要太大 */
+.chat-message.assistant h1,
+.chat-message.assistant h2,
+.chat-message.assistant h3 {
+  font-size: 15px;
+  margin: 8px 0 4px 0;
+}
+
+/* textarea 替代 input 的样式（复用原有 input 样式） */
+.chat-input-area textarea {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+}
+
+.chat-input-area textarea:focus {
+  border-color: #1890ff;
 }
