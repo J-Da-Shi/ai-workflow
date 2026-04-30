@@ -33,6 +33,31 @@ export interface AgentResult {
   plan?: string; // 如果 AI 生成了 Plan，单独提取出来
 }
 
+/**
+ * SSE 实时推送事件格式
+ *
+ * Agent Loop 执行过程中，通过 OnEvent 回调向外推送进度
+ * 前端通过 SSE 接收这些事件，实时展示在 “执行日志” tab中
+ *
+ * 事件类型：
+ * - thinking：AI 正在思考（每轮循环开始时出发）
+ * - tool_done：一次工具调用完成（包含工具名、参数、结果）
+ * - done：Agent Loop 结束，AI 给出了最终回复
+ * - error：执行出错
+ */
+export interface AgentSSEEvent {
+  type: 'thinking' | 'tool_done' | 'done' | 'error';
+  data: {
+    iteration?: number; // 当前是第几轮循环（从 1 开始）
+    toolName?: string; // 工具名称
+    toolArgs?: Record<string, any>; // AI 传给工具的参数
+    result?: string; // 工具执行结果
+    success?: boolean; // 工具是否执行成功
+    reply?: string; // AI 最终回复（done 时有值）
+    message?: string; // 错误信息（error 时有值）
+  };
+}
+
 @Injectable()
 export class AgentService {
   private openai: OpenAI;
@@ -155,6 +180,10 @@ ${projectStructure}`;
     nodeKey: string,
     systemPrompt: string,
     task: string,
+    // 可选的 SSE 事件回调
+    // 传入时：每步都会调用它推送进度（SSE 端点用）
+    // 不传时：什么都不会发生（原有的 executeNode 路径，向后兼容）
+    onEvent?: (event: AgentSSEEvent) => void,
   ): Promise<AgentResult> {
     // 状态锁
     const lockKey = `${workflowId}:${nodeKey}`;
@@ -191,6 +220,9 @@ ${projectStructure}`;
       const MAX_ITERATIONS = 30; // 安全上限，防止无限循环
 
       for (let i = 0; i < MAX_ITERATIONS; i++) {
+        // SSE 推送：告诉前端“AI 正在思考第 N 轮”
+        // 可选链 ?.() 确保不传 onEvent 时不报错
+        onEvent?.({ type: 'thinking', data: { iteration: i + 1 } });
         // 调用 DeepSeek（带工具定义）
         const response = await this.openai.chat.completions.create({
           model: process.env.AI_MODEL || 'deepseek-chat',
@@ -215,6 +247,8 @@ ${projectStructure}`;
         // 判断：AI 是否要调用工具
         if (!message.tool_calls || message.tool_calls.length === 0) {
           // AI 没有调用工具 -> Loop 结束
+          // SSE 推送：告诉前端 “执行完成，这是最终回复”
+          onEvent?.({ type: 'done', data: { reply: message.content || '' } });
           // message.content 就是 AI 的最终回复（Plan 或总结）
           return {
             reply: message.content || '',
@@ -251,6 +285,18 @@ ${projectStructure}`;
             result,
             success,
             timestamp: new Date(),
+          });
+
+          // SSE 推送：告诉前端 “刚执行了 XX 工具，结果时 yyy”
+          onEvent?.({
+            type: 'tool_done',
+            data: {
+              toolName: name,
+              toolArgs: args,
+              result,
+              success,
+              iteration: i + 1,
+            },
           });
 
           // 持久化到数据库（异步，不阻塞 Loop）

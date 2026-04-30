@@ -48,3 +48,14 @@
   white-space: pre-wrap;
   word-break: break-all;
 }
+
+.agent-thinking {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  background: #f6f8fa;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  color: #666;
+  font-size: 13px;
+}

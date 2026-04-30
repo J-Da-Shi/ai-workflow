@@ -27,6 +27,7 @@ interface AgentLogsProps {
 export default function AgentLogs({ workflowId, nodeKey }: AgentLogsProps) {
   const [logs, setLogs] = useState<AgentLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [thinkingIteration, setThinkingIteration] = useState(0);
 
   useEffect(() => {
     const fetchLogs = async () => {
@@ -43,10 +44,43 @@ export default function AgentLogs({ workflowId, nodeKey }: AgentLogsProps) {
     fetchLogs();
   }, [workflowId, nodeKey]);
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const { detail } = e as CustomEvent;
+      if (!detail) return;
+
+      switch (detail.type) {
+        case 'thinking':
+          setThinkingIteration(detail.data.iteration || 0);
+          break;
+        case 'tool_done':
+          setThinkingIteration(0);
+          setLogs((prev) => [
+            ...prev,
+            {
+              id: `live-${Date.now()}`,
+              toolName: detail.data.toolName,
+              toolArgs: detail.data.toolArgs,
+              result: detail.data.result,
+              success: detail.data.success,
+            },
+          ]);
+          break;
+        case 'done':
+        case 'error':
+          setThinkingIteration(0);
+          break;
+      }
+    };
+
+    window.addEventListener('agent-log-event', handler);
+    return () => window.removeEventListener('agent-log-event', handler);
+  }, []);
+
   if (loading)
     return <Spin style={{ display: 'block', margin: '40px auto' }} />;
 
-  if (logs.length === 0) {
+  if (logs.length === 0 && thinkingIteration === 0) {
     return <Empty description="暂无执行日志" style={{ marginTop: 40 }} />;
   }
 
@@ -61,6 +95,15 @@ export default function AgentLogs({ workflowId, nodeKey }: AgentLogsProps) {
           失败 {logs.filter((l) => !l.success).length}
         </Tag>
       </div>
+
+      {thinkingIteration > 0 && (
+        <div className="agent-thinking">
+          <Spin size="small" />
+          <span style={{ marginLeft: 8 }}>
+            AI 正在思考（第 {thinkingIteration} 轮）...
+          </span>
+        </div>
+      )}
 
       <Collapse
         size="small"

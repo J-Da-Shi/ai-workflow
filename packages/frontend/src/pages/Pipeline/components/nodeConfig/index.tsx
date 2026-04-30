@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Button, Switch, message } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
-import { updateNodeConfig, executeNode } from '../../../../api/workflow';
+import { updateNodeConfig } from '../../../../api/workflow';
 import './index.css';
 
 interface ConfigTabProps {
@@ -35,12 +35,67 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
   const [executing, setExecuting] = useState(false);
 
   // ─── 执行节点 ───
+  /**                                                    
+  * 执行节点（SSE 实时推送版）                                                                                                                                                              
+  *                                                                                                                                                                                         
+  * 调用链：                                                                                                                                                                                
+  *   fetch POST /execute-stream                                                                                                                                                            
+  *     → 后端 executeNodeStream → executeNode(onEvent)                                                                                                                                     
+  *       → agentService.runAgent(onEvent)                                                                                                                                                  
+  *         → onEvent 触发 res.write()                                                                                                                                                      
+  *           → 前端 reader.read() 逐条接收                                                                                                                                                 
+  *             → CustomEvent 派发给 agentLogs 组件                                                                                                                                         
+  *                                                                                                                                                                                         
+  * 为什么用 fetch 而不是 axios：                                                                                                                                                           
+  *   axios 不支持流式读取 response body，必须用原生 fetch + getReader()                                                                                                                    
+  *                                                                                                                                                                                         
+  * 为什么用 CustomEvent 而不是 props/状态提升：                                                                                                                                            
+  *   nodeConfig 和 agentLogs 是兄弟组件，用事件解耦最简单                                                                                                                                  
+  *   CustomEvent.detail 可以携带任意数据                                                                                                                                                   
+  */
   const handleExecuteNode = async () => {
     setExecuting(true);
     window.dispatchEvent(new Event('start-poll-executions'));
     try {
-      await executeNode(workflowId, nodeKey);
-      message.success('节点执行完成');
+      // 1. 发起 SSE 请求                                                                                                                                                                    
+      const res = await fetch(`/api/workflows/${workflowId}/nodes/${nodeKey}/execute-stream`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      // 2. 获取流式 reader
+      const reader = res.body!.getReader();
+      const decoder = new TextDecoder();
+
+      // 3. 逐块读取 SSE 数据
+      while(true) {
+        const { done, value } = await reader.read();
+        if(done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        // SSE 格式：每条消息是 "data: {...}\n\n"                                                                                                                                            
+        // 一个 chunk 可能包含多条消息，按行分割处理
+        const lines = chunk.split('\n');
+        for (const line of lines) {
+          if(!line.startsWith('data: ')) continue;
+
+          const data = line.slice(6); // 去掉 "data: " 前缀
+          if(data === '[DONE]') break;
+
+          try{
+            const event = JSON.parse(data);
+            // 派发自定义事件，agentLogs 组件监听这个事件实时渲染
+            window.dispatchEvent(
+              new CustomEvent('agent-log-event', { detail: event }),
+            );
+          }catch {
+            // JSON 解析失败 忽略
+          }
+        };
+      }
     } catch {
       message.error('节点执行失败');
     } finally {

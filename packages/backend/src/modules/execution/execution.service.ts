@@ -4,7 +4,7 @@ import { NodeExecution } from './entities/node-execution.entity';
 import { Repository } from 'typeorm';
 import { AiService } from '../ai/ai.service';
 import { WorkflowService } from '../workflow/workflow.service';
-import { AgentService } from '../agent/agent.service';
+import { AgentService, AgentSSEEvent } from '../agent/agent.service';
 
 @Injectable()
 export class ExecutionService {
@@ -60,6 +60,7 @@ export class ExecutionService {
     workflowId: string,
     nodeKey: string,
     userId: string,
+    onEvent?: (event: AgentSSEEvent) => void,
   ): Promise<NodeExecution> {
     // 1. 创建或更新执行记录（upsert 避免并发时唯一约束冲突）
     await this.executionRepo.upsert(
@@ -113,6 +114,7 @@ export class ExecutionService {
           nodeKey,
           systemPrompt,
           task,
+          onEvent, // ← 传递 SSE 回调，不传时 runAgent 内部 onEvent?.() 不触发
         );
 
         // Agent 的最终回复作为 output
@@ -164,6 +166,9 @@ export class ExecutionService {
       execution.error = message;
       execution.status = 'failed';
       await this.executionRepo.save(execution);
+
+      // 如果是 SSE 模式，把错误推给前端
+      onEvent?.({ type: 'error', data: { message } });
     }
 
     return execution;
