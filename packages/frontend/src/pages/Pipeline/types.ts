@@ -44,7 +44,6 @@ export interface NodeConfig {
   promptLayers: PromptLayers;
   inputData: { source: string; files: string[] };
   outputData: { summary: string; files: string[] };
-  aiProvider?: string;
 }
 
 // 节点执行记录
@@ -59,6 +58,17 @@ export interface NodeExecution {
   error: string | null;
   startedAt: string | null;
   completedAt: string | null;
+}
+
+// Agent 工具调用日志
+export interface AgentLog {
+  id: string;
+  toolName: string;
+  toolArgs: Record<string, any>;
+  result: string;
+  success: boolean;
+  phase: string | null;
+  createdAt: string;
 }
 
 // 抽屉

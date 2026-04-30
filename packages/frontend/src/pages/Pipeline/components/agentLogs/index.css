@@ -1,0 +1,50 @@
+.agent-logs {
+  padding: 8px 0;
+}
+
+.agent-logs-summary {
+  padding: 0 0 12px 0;
+  font-size: 13px;
+  color: #666;
+}
+
+.agent-log-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.agent-log-index {
+  color: #999;
+  font-size: 12px;
+  min-width: 24px;
+}
+
+.agent-log-tool {
+  font-weight: 500;
+}
+
+.agent-log-args {
+  color: #888;
+  font-size: 12px;
+  margin-left: auto;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-log-result {
+  max-height: 300px;
+  overflow: auto;
+  background: #1e1e1e;
+  color: #d4d4d4;
+  padding: 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}

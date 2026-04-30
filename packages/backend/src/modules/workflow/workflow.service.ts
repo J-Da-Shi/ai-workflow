@@ -224,16 +224,9 @@ export class WorkflowService {
     const defaultPrompt =
       this.defaultSystemPrompts[dto.nodeType] || '请根据输入执行任务。';
 
-    // 根据节点类型决定默认的 AI 提供者
-    // "代码开发"节点默认使用 claude-agent（AI 代码生成 + 文件写入）
-    // 其他节点默认使用 default（纯文本生成）
-    const defaultAiProvider =
-      dto.nodeType === '代码开发' ? 'claude-agent' : 'default';
-
     const data = this.nodeRepo.create({
       ...dto,
       workflowId,
-      aiProvider: dto.aiProvider || defaultAiProvider,
       promptLayers: dto.promptLayers || {
         system: defaultPrompt,
         project: null,

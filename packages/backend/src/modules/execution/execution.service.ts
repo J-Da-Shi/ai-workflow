@@ -1,11 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import * as path from 'path';
-import * as fs from 'fs';
 import { NodeExecution } from './entities/node-execution.entity';
 import { Repository } from 'typeorm';
 import { AiService } from '../ai/ai.service';
 import { WorkflowService } from '../workflow/workflow.service';
+import { AgentService } from '../agent/agent.service';
 
 @Injectable()
 export class ExecutionService {
@@ -16,6 +15,8 @@ export class ExecutionService {
     private workflowService: WorkflowService,
 
     private aiService: AiService,
+
+    private agentService: AgentService,
   ) {}
 
   // 获取所有节点执行状态
@@ -96,51 +97,42 @@ export class ExecutionService {
 
       // 获取上一个节点的输出作为输入
       const input = await this.getNodeInput(workflowId, nodeKey, userId);
+      // 分支：根据节点类型选择执行路径
+      if (nodeConfig.nodeType === '代码开发') {
+        // Agent Loop 路径
+        // 代码开发节点使用 Agent Loop：AI 可以调用文件工具（read/write/search/list）
+        // 循环执行直到 AI 给出最终回复
 
-      // 判断是否走"AI 代码生成 + 文件写入"路径：
-      // 1. 节点配置了 aiProvider === 'claude-agent'（用户手动选择）
-      // 2. 或者节点类型是"代码开发"（默认就应该走文件写入路径）
-      const useCodeGen =
-        nodeConfig.aiProvider === 'claude-agent' ||
-        nodeConfig.nodeType === '代码开发';
-      if (useCodeGen) {
-        // AI 代码生成 + 文件写入路径
-        // 拼接用户 prompt：如果有上一个节点的产出就带上，没有就让 Agent 直接执行
-        const userPrompt = input
+        // 构建任务描述：如果有上游节点输出，拼接到任务中
+        const task = input
           ? `以下是上一阶段的产出：\n${input}\n\n请基于以上内容执行当前节点的任务。`
-          : '请执行当前节点的任务。';
-
-        // 调用 AI 生成代码并写入文件到 AI_WORKSPACE_DIR/{workflowId}/ 目录
-        // 返回 result （文本结果）和 files（创建/修改的文件列表）
-        const { result, files } = await this.aiService.callAIAndWriteFiles(
-          systemPrompt,
-          userPrompt,
+          : '请根据 System Prompt 中的要求开始工作。先分析项目结构，然后制定方案。';
+        // 调用 Agent Loop
+        const agentResult = await this.agentService.runAgent(
           workflowId,
+          nodeKey,
+          systemPrompt,
+          task,
         );
+
+        // Agent 的最终回复作为 output
+        execution.output = agentResult.reply;
 
         // 生成摘要
-        const summary = await this.aiService.callAI(
-          '请用一两句话简要总结一下内容的核心产出：',
-          [{ role: 'user', content: result }],
+        execution.summary = await this.aiService.callAI(
+          '请用一两句话简要总结以下内容的核心产出：',
+          [{ role: 'user', content: agentResult.reply }],
         );
 
-        // 存 output + summary + 文件列表
-        execution.output = result;
-        execution.summary = summary;
         execution.status = 'waiting';
         await this.executionRepo.save(execution);
-        await this.workflowService.updateNodeConfig(workflowId, nodeKey, {
-          outputData: { summary, files },
-        });
       } else {
-        // 默认 OpenAI/DeepSeek 路径
         const messages: { role: 'user' | 'assistant'; content: string }[] = [];
         const history = await this.aiService.getChatHistory(
           workflowId,
           nodeKey,
         );
 
-        // 对话历史
         history.forEach((msg) => {
           messages.push({
             role: msg.role as 'user' | 'assistant',
@@ -157,15 +149,10 @@ export class ExecutionService {
 
         const result = await this.aiService.callAI(systemPrompt, messages);
 
-        // 再调一次 AI 生成摘要
         const summary = await this.aiService.callAI(
-          '请用一两句话简要总结一下内容的核心产出：',
+          '请总结一下内容的核心产出：',
           [{ role: 'user', content: result }],
         );
-
-        // 更新执行记录
-        // 把 AI 的完整输出存到 output，供下一个节点通过 getNodeInput() 读取
-        // 之前只存 summary 不存 output，导致下游节点拿不到上游的完整产出
         execution.output = result;
         execution.summary = summary;
         execution.status = 'waiting';
@@ -352,93 +339,5 @@ export class ExecutionService {
       // 沿着连线找到下一个节点，继续循环
       currentId = nextMap.get(currentId) || '';
     }
-  }
-
-  /**
-   * 获取工作流目录下的文件列表
-   * AI 代码生成执行时会在 AI_WORKSPACE_DIR/{workflowId}/ 下创建文件
-   * 这个方法扫描该目录，返回所有文件的相对路径
-   * @param workflowId - 工作流 ID，用于定位工作目录
-   * @returns 文件相对路径数组，例如：['src/app.ts', 'package.json']
-   */
-  getWorkspaceFiles(workflowId: string): string[] {
-    const workDir = path.join(
-      process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
-      workflowId,
-    );
-    // 复用 AIService 中同样逻辑的递归扫描
-    return this.aiService.listFiles(workDir);
-  }
-
-  /**
-   * 读取工作目录下指定文件的内容
-   * @param filePath - 文件相对路径 如：src/app.ts
-   * @param workflowId - 工作流 ID
-   * @returns 文件内容字符串
-   * @throws Error 如果文件不存在
-   */
-
-  getWorkspaceFileContent(workflowId: string, filePath: string): string {
-    // 拼出文件的绝对路径
-    const fullPath = path.join(
-      process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
-      workflowId,
-      filePath,
-    );
-
-    // 安全检查：防止路径穿越攻击（如 filePath 传 '../../etc/passwd'）
-    // path.resolve 会解析 .. 等相对路径，得到真实的绝对路径
-    // 然后检查它是否仍在工作目录下
-    const workDir = path.join(
-      process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
-      workflowId,
-    );
-    if (!path.resolve(fullPath).startsWith(path.resolve(workDir))) {
-      throw new Error('非法文件路径');
-    }
-
-    if (!fs.existsSync(fullPath)) {
-      throw new Error('文件不存在');
-    }
-
-    // readFileSync：同步读取文件内容
-    // 'utf-8': 以 UTF-8 编码读取，返回字符串（不传返回 Buffer）
-    return fs.readFileSync(fullPath, 'utf-8');
-  }
-
-  /**
-   * 保存文件内容到工作目录
-   * 用户在前端编辑器中修改代码后，调用此方法写回磁盘
-   *
-   * @param workflowId - 工作流 ID
-   * @param filePath - 文件相对路径
-   * @param content - 新的文件内容
-   */
-
-  saveWorkspaceFileContent(
-    workflowId: string,
-    filePath: string,
-    content: string,
-  ): void {
-    const fullPath = path.join(
-      process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
-      workflowId,
-      filePath,
-    );
-
-    // 安全检查：防止路径穿越
-    const workDir = path.join(
-      process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
-      workflowId,
-    );
-    if (!path.resolve(fullPath).startsWith(path.resolve(workDir))) {
-      throw new Error('非法文件路径');
-    }
-
-    // 确保父目录存在（用户可能重命名了路径）
-    fs.mkdirSync(path.dirname(fullPath), { recursive: true });
-
-    // 写入文件内容
-    fs.writeFileSync(fullPath, content, 'utf-8');
   }
 }

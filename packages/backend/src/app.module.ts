@@ -6,6 +6,7 @@ import { WorkModule } from './modules/workbench/work.module';
 import { WorkflowModule } from './modules/workflow/workflow.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ExecutionModule } from './modules/execution/execution.module';
+import { AgentModule } from './modules/agent/agent.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { ExecutionModule } from './modules/execution/execution.module';
     WorkflowModule,
     AiModule,
     ExecutionModule,
+    AgentModule,
   ],
 })
 export class AppModule {}

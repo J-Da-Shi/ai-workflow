@@ -46,14 +46,6 @@ export class WorkflowNode {
   @Column()
   aiModel: string;
 
-  /**
-   * AI 提供者，决定节点用哪条执行路径
-   * - 'default'：纯文本生成（callAI）
-   * - 'claude-agent'：代码生成 + 文件写入（callAIAndWriteFiles）
-   */
-  @Column({ default: 'default' })
-  aiProvider: string;
-
   @Column({ default: '15分钟' })
   timeout: string;
   // 输入来源描述

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Switch, message, Select } from 'antd';
+import { Button, Switch, message } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
 import { updateNodeConfig, executeNode } from '../../../../api/workflow';
 import './index.css';
@@ -32,12 +32,12 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
   const [editingKey, setEditingKey] = useState<string | null>(null);                // 正在编辑的层 key（null 表示未编辑）
   const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });   // 三层 Prompt 内容（本地副本）
   const [editText, setEditText] = useState('');                                     // textarea 中的临时编辑文本
-  const [executing, setExecuting] = useState(false);                                // 是否正在执行
-  const [aiProvider, setAiProvider] = useState(config.aiProvider || 'default');  // AI 提供者选择状态，config.aiProvider 可能是 undefined（老节点没有这个字段），默认用 default
+  const [executing, setExecuting] = useState(false);
 
   // ─── 执行节点 ───
   const handleExecuteNode = async () => {
     setExecuting(true);
+    window.dispatchEvent(new Event('start-poll-executions'));
     try {
       await executeNode(workflowId, nodeKey);
       message.success('节点执行完成');
@@ -45,6 +45,7 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
       message.error('节点执行失败');
     } finally {
       setExecuting(false);
+      window.dispatchEvent(new Event('sync-executions'));
     }
   };
 
@@ -99,27 +100,6 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
           <div className="config-row">
             <span className="config-label">输入来源</span>
             <span className="config-value">{config.inputSource}</span>
-          </div>
-          {/* AI 提供者选择：决定节点用哪个 AI 引擎执行 */}
-          <div className="config-row">
-            <span className="config-label">AI 提供者</span>
-            <span className="config-value">
-              <Select
-                value={aiProvider}
-                style={{ width: 200 }}
-                onChange={(value) => {
-                  // 更新本地状态                                                                                                                                                                 
-                  setAiProvider(value);
-                  // 持久化到后端 — 调用已有的 updateNodeConfig API                                                                                                                               
-                  updateNodeConfig(workflowId, nodeKey, { aiProvider: value });
-                }}
-              >
-                {/* 默认选项：使用 OpenAI/DeepSeek，只做文本生成 */}
-                <Select.Option value="default">默认 AI（文本生成）</Select.Option>
-                {/* AI 代码生成：解析 AI 输出的代码块并写入文件 */}
-                <Select.Option value="claude-agent">AI 代码生成（可写入文件）</Select.Option>
-              </Select>
-            </span>
           </div>
           <div className="config-row">
             <span className="config-label">需要审批</span>
