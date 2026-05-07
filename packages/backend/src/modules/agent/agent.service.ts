@@ -159,6 +159,112 @@ ${projectStructure}`;
   }
 
   /**
+   * 压缩消息列表，防止上下文膨胀
+   *
+   * Agent Loop 每轮都会往 message 里追加：1条 assistant + N条 tool result
+   * 跑 15 轮后可能有 40+ 条消息，总 token 数超出 AI 的上下文窗口
+   *
+   * 压缩策略：滑动窗口
+   *     - 前 2 条固定保留（system prompt + user task，AI 需要始终看到任务要求）
+   *     - 最近 keepRecent 轮的消息完整保留（AI 做决策需要最新上下文）
+   *     - 更早的轮次：tool result 超长的截断为摘要，assistant 中间思考也截断
+   *
+   * “轮”的定义：1 条 assistant 消息 + 它触发的所有 tool result = 1 轮
+   * （因为 AI 没次回复可能调用多个工具，产生多条 tool result）
+   *
+   * 关键约束：
+   *     - 不能删除任何消息（API 要求 tool_call 和 tool result 一一配对）
+   *     - 不能动 assistant 消息的 tool_calls 字段（只截短 content）
+   *     - tool result 的 tool_call_id 必须保留（配对用的）
+   *
+   * @param messages - 当前完整消息列表
+   * @param keepRecent - 保留最近几轮完整内容（默认 5）
+   * @results 压缩后的新消息数组
+   */
+
+  private compressMessages(
+    messages: OpenAI.ChatCompletionMessageParam[],
+    keepRecent: number = 3,
+  ): OpenAI.ChatCompletionMessageParam[] {
+    // 前两条固定保留：【0】system prompt，【1】user task
+    const fixed = messages.slice(0, 2);
+    // 剩余的是 agent loop 过程中产生的消息
+    const rest = messages.slice(2);
+
+    // 按 “轮” 分组
+    // 每轮一条 assistant 消息开头，后面跟着若干 tool result
+    // 例如：[assistant(含tool_calls)，tool，tool，assistant（含tool_calls),tool,....]
+    const rounds: OpenAI.ChatCompletionMessageParam[][] = [];
+    let currentRound: OpenAI.ChatCompletionMessageParam[] = [];
+
+    for (const msg of rest) {
+      if (msg.role === 'assistant') {
+        // 遇到新的 assistant 消息 -> 上一轮结束，开始新一轮
+        if (currentRound.length > 0) {
+          rounds.push(currentRound);
+        }
+        currentRound = [msg];
+      } else {
+        // tool 消息归入当前轮
+        currentRound.push(msg);
+      }
+    }
+    // 最后一轮（循环结束时 currentRound 里还有内容）
+    if (currentRound.length > 0) {
+      rounds.push(currentRound);
+    }
+
+    // 确定压缩分界线
+    // cutoff 之前的轮次需要压缩，cutoff 及之后的保持原样
+    const cutoff = Math.max(0, rounds.length - keepRecent);
+
+    // 逐轮处理
+    const compressed: OpenAI.ChatCompletionMessageParam[] = [];
+
+    for (let i = 0; i < rounds.length; i++) {
+      if (i < cutoff) {
+        // 早期轮次：需要压缩
+        for (const msg of rounds[i]) {
+          if (msg.role === 'tool') {
+            // tool result 消息：content 超过 500 字符才能截断
+            // 保留前 200 字符作为摘要，让 AI 仍能大概知道工具返回了什么
+            const content = typeof msg.content === 'string' ? msg.content : '';
+            if (content.length > 300) {
+              compressed.push({
+                ...msg,
+                content:
+                  content.slice(0, 200) +
+                  `\n...[已截断，原文共${content.length}字符]`,
+              });
+            } else {
+              compressed.push(msg);
+            }
+          } else if (msg.role === 'assistant') {
+            // assistant 中间回复：可能包含 AI 的思考过程文本
+            // 注意：不能动 tool_calls 字段！只截短 content
+            const content = (msg as any).content;
+            if (typeof content === 'string' && content.length > 300) {
+              compressed.push({
+                ...msg,
+                content: content.slice(0, 200) + `\n...[中间思考已截断]`,
+              } as any);
+            } else {
+              compressed.push(msg);
+            }
+          } else {
+            compressed.push(msg);
+          }
+        }
+      } else {
+        // 最近的轮次：完整保留，不做任何修改
+        compressed.push(...rounds[i]);
+      }
+    }
+
+    return [...fixed, ...compressed];
+  }
+
+  /**
    * 执行 Agent Loop 核心方法
    *
    * 这是整个 Agent 的主循环：
@@ -223,6 +329,12 @@ ${projectStructure}`;
         // SSE 推送：告诉前端“AI 正在思考第 N 轮”
         // 可选链 ?.() 确保不传 onEvent 时不报错
         onEvent?.({ type: 'thinking', data: { iteration: i + 1 } });
+        // 上下文压缩：超过 12 条消息时触发，截短早期轮次的 tool result
+        if (messages.length > 12) {
+          const compressed = this.compressMessages(messages);
+          messages.length = 0;
+          messages.push(...compressed);
+        }
         // 调用 DeepSeek（带工具定义）
         const response = await this.openai.chat.completions.create({
           model: process.env.AI_MODEL || 'deepseek-chat',
@@ -259,7 +371,7 @@ ${projectStructure}`;
         // AI 要调用工具 -> 逐个执行
         for (const toolCall of message.tool_calls) {
           // openai@6 的类型系统中 tool_calls 是联合类型
-          // 只处理 type === function 的调用（DeepSeek 只会返回这种）
+          // 只处理 type === function 的调用（DeepSeek 只会返回这种）·
           if (toolCall.type !== 'function') continue;
           const { name } = toolCall.function;
           // AI 返回的 arguments 是 JSON 字符串，需要解析

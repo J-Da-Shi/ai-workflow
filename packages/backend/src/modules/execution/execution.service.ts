@@ -1,5 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import { NodeExecution } from './entities/node-execution.entity';
 import { Repository } from 'typeorm';
 import { AiService } from '../ai/ai.service';
@@ -27,6 +29,83 @@ export class ExecutionService {
   // 删除节点执行记录
   async deleteExecution(workflowId: string, nodeKey: string): Promise<void> {
     await this.executionRepo.delete({ workflowId, nodeKey });
+  }
+
+  /**
+   * 递归扫描目录，返回所有文件的相对路径和内容
+   *
+   * 用于执行前拍快照 + 执行后对比生成 diff
+   * 排除 node_modules / .git / dist 等无关目录
+   *
+   * @param dir      - 需要扫描的目录绝对路径
+   * @param baseDir  - 基准目录（用于计算相对路径）
+   * @returns { "src/app.ts": "内容...", "package.json": "..." }
+   */
+
+  private scanDirectory(dir: string, baseDir?: string): Record<string, string> {
+    const base = baseDir || dir;
+    const result: Record<string, string> = {};
+
+    if (!fs.existsSync(dir)) return result;
+
+    const entries = fs.readdirSync(dir, { withFileTypes: true });
+    for (const entry of entries) {
+      if (['node_modules', '.git', 'dist', '.sandbox'].includes(entry.name))
+        continue;
+
+      const fullPath = path.join(dir, entry.name);
+      const relativePath = path.relative(base, fullPath);
+
+      if (entry.isDirectory()) {
+        // 递归扫描子目录
+        Object.assign(result, this.scanDirectory(fullPath, base));
+      } else {
+        // 读取文件内容（只处理文本文件，跳过超大文件）
+        const stat = fs.statSync(fullPath);
+        // 小于 512kb 才读
+        if (stat.size < 512 * 1024) {
+          result[relativePath] = fs.readFileSync(fullPath, 'utf-8');
+        }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 对比快照和当前文件，生成变更列表
+   *
+   * @param snapshot  - 执行前的快照 {路径： 内容}
+   * @param current   - 执行后的当前状态 { 路径： 内容 }
+   * @returns 变更列表
+   */
+
+  private generateChanges(
+    snapshot: Record<string, string>,
+    current: Record<string, string>,
+  ): Array<{ file: string; type: 'added' | 'modified' | 'deleted' }> {
+    const changes: Array<{
+      file: string;
+      type: 'added' | 'modified' | 'deleted';
+    }> = [];
+
+    // 新增 + 修改：遍历当前文件
+    for (const file of Object.keys(current)) {
+      if (!(file in snapshot)) {
+        changes.push({ file, type: 'added' });
+      } else if (current[file] !== snapshot[file]) {
+        changes.push({ file, type: 'modified' });
+      }
+    }
+
+    // 删除：快照中有但当前没有
+    for (const file of Object.keys(snapshot)) {
+      if (!(file in current)) {
+        changes.push({ file, type: 'deleted' });
+      }
+    }
+
+    return changes;
   }
 
   // 获取节点输入（查找上一个节点的 output）
@@ -98,6 +177,11 @@ export class ExecutionService {
 
       // 获取上一个节点的输出作为输入
       const input = await this.getNodeInput(workflowId, nodeKey, userId);
+      // 获取工作目录
+      const workDir = path.join(
+        process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
+        workflowId,
+      );
       // 分支：根据节点类型选择执行路径
       if (nodeConfig.nodeType === '代码开发') {
         // Agent Loop 路径
@@ -108,6 +192,12 @@ export class ExecutionService {
         const task = input
           ? `以下是上一阶段的产出：\n${input}\n\n请基于以上内容执行当前节点的任务。`
           : '请根据 System Prompt 中的要求开始工作。先分析项目结构，然后制定方案。';
+
+        // 执行前快照
+        // 记录当前工作目录的文件状态，用于执行后对比生成 diff
+        const snapshot = this.scanDirectory(workDir);
+        execution.snapshot = snapshot;
+        await this.executionRepo.save(execution);
         // 调用 Agent Loop
         const agentResult = await this.agentService.runAgent(
           workflowId,
@@ -125,6 +215,11 @@ export class ExecutionService {
           '请用一两句话简要总结以下内容的核心产出：',
           [{ role: 'user', content: agentResult.reply }],
         );
+
+        // 执行后对比，生成变更列表
+        const currentFiles = this.scanDirectory(workDir);
+        const changes = this.generateChanges(snapshot, currentFiles);
+        execution.changes = changes;
 
         execution.status = 'waiting';
         await this.executionRepo.save(execution);
@@ -278,6 +373,49 @@ export class ExecutionService {
     if (!execution) throw new Error('执行记录不存在');
 
     execution.status = 'rejected'; // 更改状态
+
+    // 还原文件：根据快照会退到执行前状态
+    if (execution.snapshot && execution.changes) {
+      const workDir = path.join(
+        process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
+        workflowId,
+      );
+
+      for (const change of execution.changes) {
+        const filePath = path.join(workDir, change.file);
+
+        switch (change.type) {
+          case 'added':
+            // 新增文件 -> 删除
+            if (fs.existsSync(filePath)) {
+              fs.rmSync(filePath);
+            }
+            break;
+          case 'modified':
+            // 修改的文件 -> 用快照内容还原
+            if (execution.snapshot[change.file] !== undefined) {
+              fs.writeFileSync(
+                filePath,
+                execution.snapshot[change.file],
+                'utf-8',
+              );
+            }
+            break;
+          case 'deleted':
+            // 删除的文件 -> 从快照恢复
+            if (execution.snapshot[change.file] !== undefined) {
+              fs.mkdirSync(path.dirname(filePath), { recursive: true });
+              fs.writeFileSync(
+                filePath,
+                execution.snapshot[change.file],
+                'utf-8',
+              );
+            }
+            break;
+        }
+      }
+    }
+
     await this.executionRepo.save(execution);
 
     return execution;
@@ -344,5 +482,43 @@ export class ExecutionService {
       // 沿着连线找到下一个节点，继续循环
       currentId = nextMap.get(currentId) || '';
     }
+  }
+
+  /**
+   * 获取节点执行的文件变更详情
+   *
+   * 返回每个变更文件的 before（快照内容）和 after（当前内容）
+   * 前端用这两个字段渲染 diff 查看器
+   */
+  async getNodeDiff(workflowId: string, nodeKey: string) {
+    const execution = await this.executionRepo.findOne({
+      where: { workflowId, nodeKey },
+    });
+    if (!execution || !execution.changes) {
+      return { changes: [] };
+    }
+
+    const workDir = path.join(
+      process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
+      workflowId,
+    );
+
+    // 为每个变更文件附上 before/after 内容
+    const diffs = execution.changes.map((change) => {
+      const filePath = path.join(workDir, change.file);
+      const before = execution.snapshot?.[change.file] || '';
+      const after = fs.existsSync(filePath)
+        ? fs.readFileSync(filePath, 'utf-8')
+        : '';
+
+      return {
+        file: change.file,
+        type: change.type,
+        before,
+        after,
+      };
+    });
+
+    return { changes: diffs };
   }
 }

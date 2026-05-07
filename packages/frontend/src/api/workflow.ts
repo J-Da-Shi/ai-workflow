@@ -57,3 +57,7 @@ export const deleteExecution = (workflowId: string, nodeKey: string) =>
 // Agent 日志
 export const getAgentLogs = (workflowId: string, nodeKey: string) =>
     request.get(`/agent/logs/${workflowId}/${nodeKey}`);
+
+// 获取节点执行的文件变更 Diff                                                                                                                                                             
+export const getNodeDiff = (workflowId: string, nodeKey: string) =>
+    request.get(`/workflows/${workflowId}/nodes/${nodeKey}/diff`); 

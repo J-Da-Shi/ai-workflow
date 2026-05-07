@@ -101,4 +101,12 @@ export class ExecutionController {
   deleteExecution(@Param('id') id: string, @Param('nodeKey') nodeKey: string) {
     return this.executionService.deleteExecution(id, nodeKey);
   }
+
+  @Get(':id/nodes/:nodeKey/diff')
+  async getNodeDiff(
+    @Param('id') id: string,
+    @Param('nodeKey') nodeKey: string,
+  ) {
+    return this.executionService.getNodeDiff(id, nodeKey);
+  }
 }

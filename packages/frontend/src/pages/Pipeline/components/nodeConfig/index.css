@@ -7,11 +7,11 @@
 .config-body {
   flex: 1;
   overflow-y: auto;
-  padding: 20px;
+  padding: 16px 0;
 }
 
 .config-section {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .config-section-title {
@@ -26,7 +26,7 @@
 .config-row {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
+  align-items: center;
   margin-bottom: 10px;
   font-size: 13px;
 }
@@ -34,13 +34,14 @@
 .config-label {
   color: #999;
   flex-shrink: 0;
-  width: 80px;
 }
 
 .config-value {
   color: #333;
-  flex: 1;
-  text-align: right;
+}
+
+.advanced-settings {
+  padding: 4px 0;
 }
 
 /* Prompt 三层结构 */
@@ -116,8 +117,7 @@
 }
 
 .prompt-layer-tag.inactive {
-  background: #f5f5f5;
-  color: #999;
+  background: transparent;
 }
 
 .prompt-layer-actions {
@@ -167,7 +167,7 @@
 
 .prompt-layer-textarea {
   width: 100%;
-  min-height: 80px;
+  min-height: 120px;
   padding: 8px 10px;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
@@ -215,42 +215,4 @@
 .prompt-layer-edit-actions button.cancel:hover {
   border-color: #1890ff;
   color: #1890ff;
-}
-
-.config-data-block {
-  background: #f6f8fa;
-  padding: 10px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
-.config-data-label {
-  color: #999;
-  margin-bottom: 4px;
-}
-
-.config-data-summary {
-  color: #52c41a;
-  font-weight: 500;
-}
-
-.config-file-list {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.config-file-item {
-  color: #333;
-  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
-  font-size: 12px;
-}
-
-.config-actions {
-  padding: 16px 20px;
-  border-top: 1px solid #e8e8e8;
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
 }

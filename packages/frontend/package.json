@@ -9,6 +9,10 @@
     "lint": "eslint .",
     "preview": "vite preview"
   },
+  "env": {
+    "host": "0.0.0.0",
+    "port": 9999
+  },
   "dependencies": {
     "@ant-design/icons": "^6.1.1",
     "@monaco-editor/react": "^4.7.0",
@@ -16,6 +20,7 @@
     "antd": "^6.3.5",
     "axios": "^1.15.0",
     "react": "^19.2.4",
+    "react-diff-viewer-continued": "^4.2.2",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.14.1",

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button, Switch, message } from 'antd';
+import { Switch, Collapse, message } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
 import { updateNodeConfig } from '../../../../api/workflow';
 import './index.css';
@@ -10,11 +10,6 @@ interface ConfigTabProps {
   nodeKey: string;
 }
 
-/**
- * Prompt 三层定义（从高到低）
- * Layer 3 节点级 > Layer 2 项目级 > Layer 1 系统默认
- * 高层覆盖低层，radio 选中哪层就以哪层为准
- */
 const LAYER_ITEMS: {
   key: keyof Omit<PromptLayers, 'activeLayer'>;
   label: string;
@@ -27,98 +22,21 @@ const LAYER_ITEMS: {
   ];
 
 export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProps) {
-  // ─── 状态 ───
-  const [activeLayer, setActiveLayer] = useState(config.promptLayers?.activeLayer);  // 当前选中的生效层级
-  const [editingKey, setEditingKey] = useState<string | null>(null);                // 正在编辑的层 key（null 表示未编辑）
-  const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });   // 三层 Prompt 内容（本地副本）
-  const [editText, setEditText] = useState('');                                     // textarea 中的临时编辑文本
-  const [executing, setExecuting] = useState(false);
+  const [activeLayer, setActiveLayer] = useState(config.promptLayers?.activeLayer);
+  const [editingKey, setEditingKey] = useState<string | null>(null);
+  const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });
+  const [editText, setEditText] = useState('');
 
-  // ─── 执行节点 ───
-  /**                                                    
-  * 执行节点（SSE 实时推送版）                                                                                                                                                              
-  *                                                                                                                                                                                         
-  * 调用链：                                                                                                                                                                                
-  *   fetch POST /execute-stream                                                                                                                                                            
-  *     → 后端 executeNodeStream → executeNode(onEvent)                                                                                                                                     
-  *       → agentService.runAgent(onEvent)                                                                                                                                                  
-  *         → onEvent 触发 res.write()                                                                                                                                                      
-  *           → 前端 reader.read() 逐条接收                                                                                                                                                 
-  *             → CustomEvent 派发给 agentLogs 组件                                                                                                                                         
-  *                                                                                                                                                                                         
-  * 为什么用 fetch 而不是 axios：                                                                                                                                                           
-  *   axios 不支持流式读取 response body，必须用原生 fetch + getReader()                                                                                                                    
-  *                                                                                                                                                                                         
-  * 为什么用 CustomEvent 而不是 props/状态提升：                                                                                                                                            
-  *   nodeConfig 和 agentLogs 是兄弟组件，用事件解耦最简单                                                                                                                                  
-  *   CustomEvent.detail 可以携带任意数据                                                                                                                                                   
-  */
-  const handleExecuteNode = async () => {
-    setExecuting(true);
-    window.dispatchEvent(new Event('start-poll-executions'));
-    try {
-      // 1. 发起 SSE 请求                                                                                                                                                                    
-      const res = await fetch(`/api/workflows/${workflowId}/nodes/${nodeKey}/execute-stream`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-
-      // 2. 获取流式 reader
-      const reader = res.body!.getReader();
-      const decoder = new TextDecoder();
-
-      // 3. 逐块读取 SSE 数据
-      while(true) {
-        const { done, value } = await reader.read();
-        if(done) break;
-
-        const chunk = decoder.decode(value, { stream: true });
-        // SSE 格式：每条消息是 "data: {...}\n\n"                                                                                                                                            
-        // 一个 chunk 可能包含多条消息，按行分割处理
-        const lines = chunk.split('\n');
-        for (const line of lines) {
-          if(!line.startsWith('data: ')) continue;
-
-          const data = line.slice(6); // 去掉 "data: " 前缀
-          if(data === '[DONE]') break;
-
-          try{
-            const event = JSON.parse(data);
-            // 派发自定义事件，agentLogs 组件监听这个事件实时渲染
-            window.dispatchEvent(
-              new CustomEvent('agent-log-event', { detail: event }),
-            );
-          }catch {
-            // JSON 解析失败 忽略
-          }
-        };
-      }
-    } catch {
-      message.error('节点执行失败');
-    } finally {
-      setExecuting(false);
-      window.dispatchEvent(new Event('sync-executions'));
-    }
-  };
-
-  // ─── Prompt 编辑操作 ───
-
-  /** 进入编辑模式：记录正在编辑的层，并用当前内容填充 textarea */
   const handleStartEdit = (key: string, content: string | null) => {
     setEditingKey(key);
     setEditText(content ?? '');
   };
 
-  /** 取消编辑：丢弃 textarea 内容，退出编辑模式 */
   const handleCancelEdit = () => {
     setEditingKey(null);
     setEditText('');
   };
 
-  /** 保存编辑：将 textarea 内容写入对应层，空内容置为 null，并持久化到后端 */
   const handleSaveEdit = async (key: keyof Omit<PromptLayers, 'activeLayer'>) => {
     const val = editText.trim();
     const newLayers = { ...layers, [key]: val || null, activeLayer };
@@ -133,56 +51,10 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
     }
   };
 
-  // ─── 渲染 ───
   return (
     <div className="config-tab">
       <div className="config-body">
-        {/* 基本信息：节点类型、模型、超时、输入来源 */}
-        <div className="config-section">
-          <div className="config-section-title">基本信息</div>
-          <div className="config-row">
-            <span className="config-label">节点类型</span>
-            <span className="config-value">{config.nodeType}</span>
-          </div>
-          <div className="config-row">
-            <span className="config-label">AI 模型</span>
-            <span className="config-value">{config.aiModel}</span>
-          </div>
-          <div className="config-row">
-            <span className="config-label">超时设置</span>
-            <span className="config-value">{config.timeout}</span>
-          </div>
-          <div className="config-row">
-            <span className="config-label">输入来源</span>
-            <span className="config-value">{config.inputSource}</span>
-          </div>
-          <div className="config-row">
-            <span className="config-label">需要审批</span>
-            <span className="config-value">
-              <Switch
-                defaultChecked={config.requireApproval !== false}
-                onChange={(checked) => {
-                  updateNodeConfig(workflowId, nodeKey, { requireApproval: checked });
-                }}
-              />
-            </span>
-          </div>
-        </div>
-
-        {/* 执行数据：Token 消耗、耗时 */}
-        <div className="config-section">
-          <div className="config-section-title">执行数据</div>
-          <div className="config-row">
-            <span className="config-label">Token 消耗</span>
-            <span className="config-value">{config.tokenUsage}</span>
-          </div>
-          <div className="config-row">
-            <span className="config-label">耗时</span>
-            <span className="config-value">{config.duration}</span>
-          </div>
-        </div>
-
-        {/* Prompt 三层模板：radio 切换生效层，每层支持 inline 编辑 */}
+        {/* Prompt 编辑器 */}
         <div className="config-section">
           <div className="config-section-title">Prompt 模板</div>
           <div className="prompt-layers">
@@ -243,7 +115,6 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
                     </div>
                   </div>
 
-                  {/* 展示模式：显示 Prompt 内容，空层显示占位提示 */}
                   {!isEditing && (
                     <div className={`prompt-layer-body${!content ? ' empty' : ''}`}>
                       {content
@@ -257,7 +128,6 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
                     </div>
                   )}
 
-                  {/* 编辑模式：textarea + 保存/取消按钮 */}
                   {isEditing && (
                     <div className="prompt-layer-editor">
                       <textarea
@@ -285,48 +155,43 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
           </div>
         </div>
 
-        {/* 输入数据：数据来源 + 变更文件列表 */}
-        <div className="config-section">
-          <div className="config-section-title">输入数据</div>
-          <div className="config-data-block">
-            <div className="config-data-label">来源</div>
-            <div>{config.inputData?.source}</div>
-            {config.inputData?.files.length > 0 && (
-              <>
-                <div className="config-data-label" style={{ marginTop: 8 }}>变更文件</div>
-                <div className="config-file-list">
-                  {config.inputData.files.map((f) => (
-                    <div key={f} className="config-file-item">{f}</div>
-                  ))}
+        {/* 高级设置 */}
+        <Collapse
+          ghost
+          size="small"
+          items={[{
+            key: 'advanced',
+            label: '高级设置',
+            children: (
+              <div className="advanced-settings">
+                <div className="config-row">
+                  <span className="config-label">AI 模型</span>
+                  <span className="config-value">{config.aiModel || '-'}</span>
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* 输出数据：执行结果摘要 + 生成文件列表 */}
-        <div className="config-section">
-          <div className="config-section-title">输出数据</div>
-          <div className="config-data-block">
-            <div className="config-data-summary">{config.outputData?.summary}</div>
-            {config.outputData?.files.length > 0 && (
-              <>
-                <div className="config-data-label" style={{ marginTop: 8 }}>生成文件</div>
-                <div className="config-file-list">
-                  {config.outputData?.files.map((f) => (
-                    <div key={f} className="config-file-item">{f}</div>
-                  ))}
+                <div className="config-row">
+                  <span className="config-label">超时设置</span>
+                  <span className="config-value">{config.timeout || '-'}</span>
                 </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* 底部操作栏：重新执行 / 执行节点 */}
-      <div className="config-actions">
-        <Button style={{ flex: 1 }} onClick={handleExecuteNode} loading={executing}>重新执行</Button>
-        <Button type="primary" style={{ flex: 1 }} onClick={handleExecuteNode} loading={executing}>执行节点</Button>
+                <div className="config-row">
+                  <span className="config-label">输入来源</span>
+                  <span className="config-value">{config.inputSource || '-'}</span>
+                </div>
+                <div className="config-row">
+                  <span className="config-label">需要审批</span>
+                  <span className="config-value">
+                    <Switch
+                      size="small"
+                      defaultChecked={config.requireApproval !== false}
+                      onChange={(checked) => {
+                        updateNodeConfig(workflowId, nodeKey, { requireApproval: checked });
+                      }}
+                    />
+                  </span>
+                </div>
+              </div>
+            ),
+          }]}
+        />
       </div>
     </div>
   );

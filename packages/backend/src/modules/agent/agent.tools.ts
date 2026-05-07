@@ -288,7 +288,26 @@ function readFile(
   // 所以 startLine 要减 1 转换为数组索引
   const start = startLine ? Math.max(0, startLine - 1) : 0;
   const end = endLine ? Math.min(lines.length, endLine) : lines.length;
-  const sliced = lines.slice(start, end);
+
+  // 源头阶段逻辑
+  // 判断是否为“全量读取”（AI 没传 startLine/endLine）
+  // 只有全量读取时才触发截断，精确读取时不干预
+  const isFullRead = !startLine && !endLine;
+  let sliced = lines.slice(start, end);
+  let truncatedNote = '';
+
+  if (isFullRead && lines.length > 500) {
+    // 硬截断：文件超过 500 行，强制只返回前 200 行
+    // 目的：单词 read_file 不能占用超过 2000 token
+    // AI 收到这个提示后会改用 search_code 定位 + startLine/endLine 精确读取
+    sliced = lines.slice(0, 200);
+    truncatedNote = `\n[文件过长（共${lines.length}行）,已只显示前 200 行。请使用 startLine/endLine 参数精确读取需要的部分]`;
+  } else if (isFullRead && lines.length > 200) {
+    // 软提示：文件超过 200 行，全量返回但给个提醒
+    // 不强制截断，因为 200-500 行还在可接受范围
+    // 但提醒 AI 下次可以更精确，减少不必要的 token 消耗
+    truncatedNote = `\n[文件较长（${lines.length}行，当前显示第 ${start + 1}-${start + sliced.length}行）]\n`;
+  }
 
   // 总行数提示：告诉 AI 这个文件有多大，帮助它决定是否需要分段读取
   const totalInfo = `[文件共 ${lines.length} 行，当前显示第 ${start + 1}-${start + sliced.length} 行]\n`;
@@ -300,7 +319,8 @@ function readFile(
     totalInfo +
     sliced
       .map((line, i) => `${String(start + i + 1).padStart(4)} | ${line}`)
-      .join('\n')
+      .join('\n') +
+    truncatedNote
   );
 }
 
