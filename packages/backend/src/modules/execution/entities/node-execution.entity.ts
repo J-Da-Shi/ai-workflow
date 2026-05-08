@@ -58,6 +58,18 @@ export class NodeExecution {
     type: 'added' | 'modified' | 'deleted';
   }> | null;
 
+  // Git 特性分支名（执行时自动创建）
+  @Column({ nullable: true })
+  gitBranch: string;
+
+  // Git commit hash(执行完成后本地提交)
+  @Column({ nullable: true })
+  gitCommit: string;
+
+  // PR/MR 链接（审批通过后创建）
+  @Column({ nullable: true })
+  gitPrUrl: string;
+
   @Column({ nullable: true })
   startedAt: Date;
 

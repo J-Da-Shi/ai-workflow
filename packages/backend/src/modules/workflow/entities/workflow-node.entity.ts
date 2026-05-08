@@ -75,6 +75,25 @@ export class WorkflowNode {
   @Column({ type: 'json', nullable: true })
   outputData: { summary: string; files: string[] };
 
+  // Git 仓库地址
+  // 格式：https://github.com/user/repo.git
+  @Column({ nullable: true })
+  gitRepo: string;
+
+  // Git 平台类型：github ｜ gitlab
+  // 决定审批通过后调哪个平台的 API 创建 PR/MR
+  @Column({ nullable: true })
+  gitPlatform: string;
+
+  // Git 访问令牌
+  // GitHub：ghp_xxx GitLab: glpat-xxx
+  @Column({ nullable: true })
+  gitToken: string;
+
+  // 基准分支
+  @Column({ nullable: true, default: 'main' })
+  gitBaseBranch: string;
+
   @CreateDateColumn()
   createdAt: Date;
 

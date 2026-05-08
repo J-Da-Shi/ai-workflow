@@ -6,6 +6,7 @@
 
 .run-timeline {
   flex: 1;
+  min-height: 200px;
   overflow-y: auto;
   padding: 16px 0;
 }
@@ -112,6 +113,23 @@
   margin: 0;
 }
 
+.git-pr-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 12px;
+  background: #f6ffed;
+  border: 1px solid #b7eb8f;
+  border-radius: 6px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.git-pr-link a {
+  color: #1890ff;
+  word-break: break-all;
+}
+
 .run-actions {
   display: flex;
   gap: 8px;
@@ -138,7 +156,8 @@
 .diff-layout {
   display: flex;
   gap: 12px;
-  height: 400px;
+  max-height: 300px;
+  overflow: hidden;
 }
 
 .diff-file-list {

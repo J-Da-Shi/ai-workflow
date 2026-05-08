@@ -150,10 +150,18 @@ export default function NodeRun({ workflowId, nodeKey, onExecute, executing }: N
     });
   };
 
+  const [gitPrUrl, setGitPrUrl] = useState('');
+
   const handleApprove = async () => {
     try {
-      await approveNode(workflowId, nodeKey);
+      const res = await approveNode(workflowId, nodeKey);
       message.success('已通过');
+      // 如果有 Git PR 链接，展示
+      const data = res as any;
+      if (data?.gitPrUrl) {
+        setGitPrUrl(data.gitPrUrl);
+        message.info('PR 已创建');
+      }
       window.dispatchEvent(new Event('sync-executions'));
     } catch {
       message.error('操作失败');
@@ -278,6 +286,15 @@ export default function NodeRun({ workflowId, nodeKey, onExecute, executing }: N
               ) : null}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Git PR 链接 */}
+      {gitPrUrl && (
+        <div className="git-pr-link">
+          <CheckCircleOutlined style={{ color: '#52c41a' }} />
+          <span>PR 已创建：</span>
+          <a href={gitPrUrl} target="_blank" rel="noopener noreferrer">{gitPrUrl}</a>
         </div>
       )}
 

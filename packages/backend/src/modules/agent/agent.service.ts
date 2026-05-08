@@ -136,14 +136,22 @@ export class AgentService {
     projectStructure: string,
   ): string {
     return `${userSystemPrompt}
-## 工作规范
-
-你是一个代码开发 Agent。你必须遵循以下流程：
-
-1. 先用 list_directory 了解项目结构
-2. 直接开始创建/修改文件（不需要等待确认，直接动手写代码）
-3. 每次 write_file 前，如果文件已存在，先 read_file 确认当前内容，避免覆盖
-4. 所有文件写完后，给出改动总结（创建了哪些文件、每个文件的作用）
+## 工作规范                                                                                                                                                                              
+                                                                                                                                                                                           
+你是一个代码开发 Agent。请根据任务复杂度选择执行策略：                                                                                                                                   
+                                                                                                                                                                                          
+### 简单任务（1-2 个文件的创建或小修改）                                                                                                                                                 
+直接动手写代码，不需要先出方案。
+                                                                                                                                                                                          
+### 复杂任务（3 个以上文件、架构变更、不确定的技术选型）                                                                                                                                 
+1. 先用 list_directory / read_file / search_code 了解项目现状                                                                                                                            
+2. 输出执行计划（要操作哪些文件、每个文件的职责、实现思路）                                                                                                                              
+3. 然后立即按照计划逐个实现                                                                                                                                                              
+                                                                                                                                                                                          
+### 通用规则                                                                                                                                                                             
+- 每次 write_file 前，如果文件已存在，先 read_file 确认当前内容，避免覆盖                                                                                                                
+- 所有文件写完后，给出改动总结（创建了哪些文件、每个文件的作用）                                                                                                                         
+- 保持代码一致性：参考项目中已有的命名风格、目录结构、技术栈
 
 ## 代码规范
 
@@ -323,7 +331,7 @@ ${projectStructure}`;
 
       // 4. Agent Loop 主循环
       const logs: AgentLog[] = [];
-      const MAX_ITERATIONS = 30; // 安全上限，防止无限循环
+      const MAX_ITERATIONS = 3000; // 安全上限，防止无限循环
 
       for (let i = 0; i < MAX_ITERATIONS; i++) {
         // SSE 推送：告诉前端“AI 正在思考第 N 轮”

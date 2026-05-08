@@ -27,6 +27,28 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
   const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });
   const [editText, setEditText] = useState('');
 
+  // Git 配置状态
+  const [gitConfig, setGitConfig] = useState({
+    gitRepo: config.gitRepo || '',
+    gitPlatform: config.gitPlatform || 'github',
+    gitToken: config.gitToken || '',
+    gitBaseBranch: config.gitBaseBranch || 'main',
+  });
+
+  const handleSaveGit = async () => {
+    try {
+      await updateNodeConfig(workflowId, nodeKey, {
+        gitRepo: gitConfig.gitRepo.trim() || null,
+        gitPlatform: gitConfig.gitPlatform,
+        gitToken: gitConfig.gitToken.trim() || null,
+        gitBaseBranch: gitConfig.gitBaseBranch.trim() || 'main',
+      });
+      message.success('Git 配置已保存');
+    } catch {
+      message.error('保存失败');
+    }
+  };
+
   const handleStartEdit = (key: string, content: string | null) => {
     setEditingKey(key);
     setEditText(content ?? '');
@@ -187,6 +209,61 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
                       }}
                     />
                   </span>
+                </div>
+                <div className="git-section">
+                  <div className="git-section-title">Git 集成</div>
+                  <div className="config-row">
+                    <span className="config-label">Git 仓库</span>
+                    <span className="config-value">
+                      <input
+                        className="config-input"
+                        placeholder="https://github.com/user/repo.git"
+                        defaultValue={config.gitRepo || ''}
+                        onChange={(e) => setGitConfig(prev => ({ ...prev, gitRepo: e.target.value }))}
+                      />
+                    </span>
+                  </div>
+                  <div className="config-row">
+                    <span className="config-label">Git 平台</span>
+                    <span className="config-value">
+                      <select
+                        className="config-input"
+                        defaultValue={config.gitPlatform || 'github'}
+                        onChange={(e) => setGitConfig(prev => ({ ...prev, gitPlatform: e.target.value }))}
+                      >
+                        <option value="github">GitHub</option>
+                        <option value="gitlab">GitLab</option>
+                      </select>
+                    </span>
+                  </div>
+                  <div className="config-row">
+                    <span className="config-label">Git Token</span>
+                    <span className="config-value">
+                      <input
+                        className="config-input"
+                        type="password"
+                        placeholder="ghp_xxx 或 glpat-xxx"
+                        defaultValue={config.gitToken || ''}
+                        onChange={(e) => setGitConfig(prev => ({ ...prev, gitToken: e.target.value }))}
+                      />
+                    </span>
+                  </div>
+                  <div className="config-row">
+                    <span className="config-label">基准分支</span>
+                    <span className="config-value">
+                      <input
+                        className="config-input"
+                        placeholder="main"
+                        defaultValue={config.gitBaseBranch || 'main'}
+                        onChange={(e) => setGitConfig(prev => ({ ...prev, gitBaseBranch: e.target.value }))}
+                      />
+                    </span>
+                  </div>
+                  <div className="git-save-row">
+                    <button className="git-save-btn" onClick={handleSaveGit}>
+                      保存 Git 配置
+                    </button>
+                  </div>
                 </div>
               </div>
             ),

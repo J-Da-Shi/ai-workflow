@@ -38,4 +38,20 @@ export class UpdateNodeConfigDto {
     summary?: string;
     files?: string[];
   };
+
+  @IsString()
+  @IsOptional()
+  gitRepo?: string;
+
+  @IsString()
+  @IsOptional()
+  gitPlatform?: string;
+
+  @IsString()
+  @IsOptional()
+  gitToken?: string;
+
+  @IsString()
+  @IsOptional()
+  gitBaseBranch?: string;
 }

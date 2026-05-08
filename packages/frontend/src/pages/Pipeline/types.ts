@@ -44,6 +44,10 @@ export interface NodeConfig {
   promptLayers: PromptLayers;
   inputData: { source: string; files: string[] };
   outputData: { summary: string; files: string[] };
+  gitRepo?: string;
+  gitPlatform?: string;
+  gitToken?: string;
+  gitBaseBranch?: string;
 }
 
 // 节点执行记录
