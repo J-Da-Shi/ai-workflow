@@ -1,0 +1,261 @@
+ PRD 审核节点 — RAG 知识库集成方案                                                                                                                                                         
+
+ Context                                                                                                                                                                                   
+                                                                                                                                                                                           
+ 需要为"PRD审核"节点增加 RAG 能力：AI 审核 PRD 时不是凭空判断，而是对照知识库中的审核标准、历史模板、规范文档来给出结构化审核意见。这是一个生产级设计，面试可讲清楚 RAG 全链路。           
+
+ ---
+ 架构总览
+
+ 用户上传文档/手动录入 → 切片 → Embedding → 存入 Milvus
+                                                    ↓
+ PRD审核节点执行 → 取 PRD 内容 → Embedding → 检索 Milvus → top-k 相关片段
+                                                    ↓
+                               AI（PRD + 检索到的审核标准） → 结构化审核报告
+
+ ---
+ 技术选型
+
+ ┌────────────┬──────────────────────────────────────┬────────────────────────────────────────────┐
+ │    组件    │                 选择                 │                    原因                    │
+ ├────────────┼──────────────────────────────────────┼────────────────────────────────────────────┤
+ │ 向量数据库 │ Milvus                               │ 生产级、支持分区隔离、混合检索、可水平扩展 │
+ ├────────────┼──────────────────────────────────────┼────────────────────────────────────────────┤
+ │ Embedding  │ text-embedding-3-small (1536维)      │ 复用现有 OpenAI SDK + baseURL              │
+ ├────────────┼──────────────────────────────────────┼────────────────────────────────────────────┤
+ │ 文档解析   │ pdf-parse + mammoth                  │ 轻量、零外部服务依赖                       │
+ ├────────────┼──────────────────────────────────────┼────────────────────────────────────────────┤
+ │ 切片策略   │ 递归字符切片 512 token + 128 overlap │ 平衡精度和上下文                           │
+ ├────────────┼──────────────────────────────────────┼────────────────────────────────────────────┤
+ │ Node SDK   │ @zilliz/milvus2-sdk-node             │ 官方 Node.js 客户端                        │
+ └────────────┴──────────────────────────────────────┴────────────────────────────────────────────┘
+
+ ---
+ 新增模块
+
+ 1. KnowledgeModule（知识库管理）
+
+ src/modules/knowledge/
+ ├── knowledge.module.ts
+ ├── knowledge.controller.ts      # REST API
+ ├── knowledge.service.ts         # 业务逻辑
+ ├── embedding.service.ts         # Embedding 调用 + 批处理
+ ├── milvus.service.ts            # Milvus 连接 + Collection 管理
+ ├── document-processor.service.ts # 文档解析 + 切片
+ ├── dto/
+ │   ├── create-knowledge-base.dto.ts
+ │   ├── upload-document.dto.ts
+ │   └── create-entry.dto.ts
+ └── entities/
+     ├── knowledge-base.entity.ts   # 知识库元数据
+     ├── knowledge-document.entity.ts # 文档元数据
+     └── knowledge-chunk.entity.ts  # 切片引用（ID 映射 Milvus）
+
+ 2. RagModule（检索 + PRD 审核）
+
+ src/modules/rag/
+ ├── rag.module.ts
+ ├── rag.service.ts              # 检索逻辑（query → embed → search → rerank）
+ └── prd-review.service.ts       # PRD 审核编排（检索 + 构造 prompt + 解析结果）
+
+ ---
+ 数据库设计
+
+ MySQL 表
+
+ knowledge_bases：知识库（按项目隔离）
+ - id, name, description, projectId, creatorId, status, documentCount, chunkCount
+
+ knowledge_documents：上传的文档
+ - id, knowledgeBaseId, fileName, fileType(pdf/md/word/manual), filePath, fileSize, status(pending/processing/completed/failed), chunkCount, metadata(JSON)
+
+ knowledge_chunks：切片引用（向量存 Milvus，文本存 MySQL）
+ - id, documentId, knowledgeBaseId, chunkIndex, content(TEXT), metadata(JSON)
+
+ Milvus Collection
+
+ Collection: knowledge_chunks
+
+ ┌───────────────────┬────────────────────┬────────────────────────────────┐
+ │       字段        │        类型        │              说明              │
+ ├───────────────────┼────────────────────┼────────────────────────────────┤
+ │ id                │ VARCHAR(36)        │ 主键，对应 MySQL chunk.id      │
+ ├───────────────────┼────────────────────┼────────────────────────────────┤
+ │ knowledge_base_id │ VARCHAR(36)        │ 分区键，按知识库隔离           │
+ ├───────────────────┼────────────────────┼────────────────────────────────┤
+ │ project_id        │ VARCHAR(36)        │ 元数据过滤                     │
+ ├───────────────────┼────────────────────┼────────────────────────────────┤
+ │ document_type     │ VARCHAR(32)        │ 文档类型过滤                   │
+ ├───────────────────┼────────────────────┼────────────────────────────────┤
+ │ content           │ VARCHAR(8192)      │ 原文（用于混合检索的稀疏匹配） │
+ ├───────────────────┼────────────────────┼────────────────────────────────┤
+ │ embedding         │ FLOAT_VECTOR(1536) │ 稠密向量                       │
+ └───────────────────┴────────────────────┴────────────────────────────────┘
+
+ 索引：HNSW + COSINE，按 knowledge_base_id 分区
+
+ ---
+ API 设计
+
+ ┌────────┬───────────────────────────────────────┬───────────────────────────────┐
+ │  方法  │                 路径                  │             说明              │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ POST   │ /knowledge/bases                      │ 创建知识库                    │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ GET    │ /knowledge/bases?projectId=xx         │ 列出项目下的知识库            │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ DELETE │ /knowledge/bases/:id                  │ 删除知识库（级联删文档+向量） │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ POST   │ /knowledge/bases/:id/documents/upload │ 上传文件（multipart）         │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ POST   │ /knowledge/bases/:id/entries          │ 手动录入知识条目              │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ GET    │ /knowledge/bases/:id/documents        │ 列出文档                      │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ DELETE │ /knowledge/documents/:docId           │ 删除文档                      │
+ ├────────┼───────────────────────────────────────┼───────────────────────────────┤
+ │ POST   │ /knowledge/search                     │ 测试检索（调试用）            │
+ └────────┴───────────────────────────────────────┴───────────────────────────────┘
+
+ ---
+ 文档处理管线
+
+ 上传文件
+   → 保存到磁盘 + 创建 document 记录 (status: processing)
+   → 解析文本：PDF→pdf-parse / Word→mammoth / MD→直接读
+   → 切片：递归字符切片（512 token, 128 overlap, Markdown 按标题优先分割）
+   → 批量 Embedding：每批 20 条，并发 3 路，失败重试 3 次
+   → 写入 Milvus：batch insert
+   → 更新 MySQL：document.status = completed, chunkCount = N
+
+ ---
+ PRD 审核执行流程
+
+ executeNode(nodeType === 'PRD审核')
+   │
+   ├─ 1. 获取 PRD 内容（上游节点输出）
+   ├─ 2. 获取节点配置的 knowledgeBaseIds
+   ├─ 3. RAG 检索：
+   │     a. PRD 按段落生成 2-3 个查询向量
+   │     b. 检索 Milvus（filter: KB IDs, top-k=10, score > 0.7）
+   │     c. 去重 + 按相关度排序，取前 8 条
+   ├─ 4. 构造 Prompt：
+   │     System: "你是 PRD 审核专家..."
+   │     + 检索到的审核标准/模板
+   │     + PRD 全文
+   │     + 输出格式要求（JSON）
+   ├─ 5. 调 AI → 解析结构化审核报告
+   └─ 6. 存入 execution.output
+
+ ---
+ 节点配置扩展
+
+ workflow_nodes entity 加字段：
+ @Column({ type: 'json', nullable: true })
+ knowledgeBaseIds: string[] | null;
+
+ DTO 加：
+ @IsArray()
+ @IsOptional()
+ knowledgeBaseIds?: string[];
+
+ ---
+ 前端改动
+
+ ┌───────────────────────┬───────────────────────────────────────────────────────┐
+ │       页面/组件       │                         说明                          │
+ ├───────────────────────┼───────────────────────────────────────────────────────┤
+ │ 新增 pages/Knowledge/ │ 知识库管理页：列表 + 上传 + 手动录入 + 文档管理       │
+ ├───────────────────────┼───────────────────────────────────────────────────────┤
+ │ nodeConfig 扩展       │ PRD审核节点显示"知识库选择"多选框                     │
+ ├───────────────────────┼───────────────────────────────────────────────────────┤
+ │ nodeRun 扩展          │ 审核结果结构化展示（通过/不通过 + 各维度评分 + 建议） │
+ ├───────────────────────┼───────────────────────────────────────────────────────┤
+ │ 新增 api/knowledge.ts │ 知识库相关接口                                        │
+ └───────────────────────┴───────────────────────────────────────────────────────┘
+
+ ---
+ 新增依赖
+
+ # 后端
+ pnpm add @zilliz/milvus2-sdk-node pdf-parse mammoth multer @types/multer
+
+ ---
+ Docker 新增服务
+
+ # docker-compose.yml 新增
+ milvus:
+   image: milvusdb/milvus:v2.4-latest
+   ports:
+     - "19530:19530"   # gRPC
+     - "9091:9091"     # 健康检查
+   volumes:
+     - milvus-data:/var/lib/milvus
+   depends_on:
+     - etcd
+     - minio
+
+ etcd:
+   image: quay.io/coreos/etcd:v3.5.5
+   environment:
+     ETCD_AUTO_COMPACTION_MODE: revision
+     ETCD_AUTO_COMPACTION_RETENTION: "1000"
+
+ minio:
+   image: minio/minio:latest
+   command: minio server /data
+   environment:
+     MINIO_ACCESS_KEY: minioadmin
+     MINIO_SECRET_KEY: minioadmin
+
+ ---
+ 环境变量新增
+
+     │                                                                                                                                                                                 │
+     │ ---                                                                                                                                                                             │
+     │ 环境变量新增                                                                                                                                                                    │
+     │                                                                                                                                                                                 │
+     │ # Milvus                                                                                                                                                                        │
+     │ MILVUS_HOST=localhost                                                                                                                                                           │
+     │ MILVUS_PORT=19530                                                                                                                                                               │
+     │                                                                                                                                                                                 │
+     │ # Embedding（复用现有 AI_BASE_URL + AI_API_KEY）                                                                                                                                │
+     │ EMBEDDING_MODEL=text-embedding-3-small                                                                                                                                          │
+     │                                                                                                                                                                                 │
+     │ ---                                                                                                                                                                             │
+     │ 实施顺序                                                                                                                                                                        │
+     │                                                                                                                                                                                 │
+     │ ┌───────┬─────────────────────────────────────────────────────────────────────┬───────┐                                                                                         │
+     │ │ Phase │                                内容                                 │ 时间  │                                                                                         │
+     │ ├───────┼─────────────────────────────────────────────────────────────────────┼───────┤                                                                                         │
+     │ │ 1     │ 基础设施：Milvus Docker + MilvusService + EmbeddingService          │ 1-2天 │                                                                                         │
+     │ ├───────┼─────────────────────────────────────────────────────────────────────┼───────┤                                                                                         │
+     │ │ 2     │ 知识库 CRUD：entities + controller + 文档处理管线                   │ 2天   │                                                                                         │
+     │ ├───────┼─────────────────────────────────────────────────────────────────────┼───────┤                                                                                         │
+     │ │ 3     │ RAG 检索 + PRD 审核：RagService + PrdReviewService + execution 集成 │ 1.5天 │                                                                                         │
+     │ ├───────┼─────────────────────────────────────────────────────────────────────┼───────┤                                                                                         │
+     │ │ 4     │ 前端：知识库管理页 + 节点配置选择器 + 审核结果展示                  │ 2天   │                                                                                         │
+     │ ├───────┼─────────────────────────────────────────────────────────────────────┼───────┤                                                                                         │
+     │ │ 5     │ 生产加固：错误重试、健康检查、异步处理                              │ 1天   │                                                                                         │
+     │ └───────┴─────────────────────────────────────────────────────────────────────┴───────┘                                                                                         │
+     │                                                                                                                                                                                 │
+     │ ---                                                                                                                                                                             │
+     │ 面试可讲的设计要点                                                                                                                                                              │
+     │                                                                                                                                                                                 │
+     │ 1. 为什么选 Milvus — 分区隔离（多租户）、混合检索（稠密+稀疏）、水平扩展                                                                                                        │
+     │ 2. 切片策略 — 512 token + 128 overlap，Markdown 按标题优先分割，平衡精度与上下文                                                                                                │
+     │ 3. 检索策略 — 多查询向量（PRD 不同段落）、score 阈值过滤噪声、元数据隔离                                                                                                        │
+     │ 4. 和工作流引擎的集成 — 新增 nodeType 分支，零侵入、不影响已有节点                                                                                                              │
+     │ 5. 生产考量 — 批量 embedding 限流、文档异步处理、Milvus 分区 vs Collection                                                                                                      │
+     │                                                                                                                                                                                 │
+     │ ---                                                                                                                                                                             │
+     │ 验证                                                                                                                                                                            │
+     │                                                                                                                                                                                 │
+     │ 1. Docker 启动 Milvus，后端连接成功                                                                                                                                             │
+     │ 2. 上传一份 PDF，查看 MySQL 中 chunk 记录 + Milvus 中向量                                                                                                                       │
+     │ 3. 创建 PRD审核节点，选择知识库，执行                                                                                                                                           │
+     │ 4. 验证检索到了相关片段（后端日志）                                                                                                                                             │
+     │ 5. AI 输出结构化审核报告                                                                                                                                                        │
+     │ 6. 前端正确展示审核结果                                                                                                                                                         │
+     ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+
