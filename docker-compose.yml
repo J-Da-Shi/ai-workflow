@@ -1,0 +1,171 @@
+# Milvus 向量数据库 + 依赖服务
+#
+# 架构：
+#  etcd -> 分布式配置中心（存 Milvus 的元数据）
+#  minio -> 对象存储（存向量数据文件）
+#  milvus -> 向量数据库本体（执行 ANN 搜索）
+#
+# 启动：podman-compose up -d
+# 停止：podman-compose down
+# 日志：podman logs milvus-standalone
+# 状态：podman ps
+
+
+# ------ docker-compose 配置文件 -------
+# 作用：定义一组容器，用一个命令同时启动/停止它们
+
+# 配置文件格式版本（类似 package.json 的 version，告诉工具用哪套语法解析）
+version: '3.8'
+
+# ---- services：定义要运行的容器列表 ----
+# 每个 key（etcd / minio / milvus）就是一个容器
+services:
+
+  # ════════════════════════════════════════════════
+  # 容器1: etcd - Milvus 的配置中心
+  # 作用：存储 Milvus 的元数据（有哪些 Collection、索引配置等）
+  # 类比：MySQL 存你的业务数据，etcd 存 Milvus 自己的"系统表"
+  # ════════════════════════════════════════════════
+  etcd:
+
+    # image = 使用哪个镜像（镜像 = 别人打包好的软件环境）
+    # 格式：仓库地址/组织/镜像名:版本号
+    # quay.io 是一个公开镜像仓库（类似 npmjs.com 对于 npm 包）
+    image: quay.io/coreos/etcd:v3.5.5
+
+    # container_name = 给容器起个名字
+    # 方便你用 podman logs milvus-etcd 查日志
+    container_name: milvus-etcd
+
+    # environment = 传给容器内程序的环境变量（类似 .env 文件里的配置）
+    environment:
+      # 数据压缩模式：按版本号自动压缩旧数据，防止磁盘无限增长
+      - ETCD_AUTO_COMPACTION_MODE=revision
+      # 保留最近 1000 个版本的数据
+      - ETCD_AUTO_COMPACTION_RETENTION=1000
+      # 存储上限：4GB（超过会拒绝写入）
+      - ETCD_QUOTA_BACKEND_BYTES=4294967296
+      # 每 50000 次写操作做一次快照（用于崩溃恢复）
+      - ETCD_SNAPSHOT_COUNT=50000
+
+    # volumes = 数据持久化（容器删除后数据不丢失）
+    # 格式：宿主机存储卷名:容器内目录
+    # etcd-data 是下面 volumes 部分定义的卷名，Docker/Podman 自动管理存储位置
+    # /etcd 是容器内 etcd 存数据的目录
+    # 效果：容器内 /etcd 的数据实际存在宿主机上，容器重建后数据还在
+    volumes:
+      - etcd-data:/etcd
+
+    # command = 容器启动后执行的命令（覆盖镜像内的默认启动命令）
+    # 这里告诉 etcd：
+    #  -advertise-client-urls：对外宣告自己的地址
+    #  -listen-client-urls：监听所有网卡的 2379 端口（0.0.0.0 = 所有地址）
+    #  --data-dir：数据存储目录
+    command: etcd -advertise-client-urls=http://127.0.0.1:2379 -listen-client-urls http://0.0.0.0:2379 --data-dir /etcd
+
+    # healthcheck = 健康检查（Podman 定期执行命令判断容器是否正常）
+    healthcheck:
+      # test：执行什么命令检查健康状态
+      # etcdctl endpoint health = etcd 官方健康检查命令
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      # interval：每 30 秒检查一次
+      interval: 30s
+      # timeout：单次检查超过 20 秒视为失败
+      timeout: 20s
+      # retries：连续失败 3 次才标记为 unhealthy
+      retries: 3
+
+  # ════════════════════════════════════════════════
+  # 容器2：MinIO - Milvus 的数据文件存储
+  # 作用：存储 Milvus 的实际向量数据文件（类似 AWS S3）
+  # 类比：MySQL 数据文件存在 /var/lib/mysql，Milvus 数据文件存在 MinIO
+  # ════════════════════════════════════════════════
+  minio:
+
+    # MinIO 镜像，锁定特定版本（避免 latest 更新导致不兼容）
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+
+    container_name: milvus-minio
+
+    environment:
+      # MinIO 访问凭证（类似 AWS 的 AccessKey / SecretKey）
+      # 这里用默认值，仅限开发环境，生产环境必须改为强密码
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+
+    volumes:
+      - minio-data:/minio_data
+
+    # 启动 MinIO 服务器
+    # /minio_data：数据存储目录
+    # --console-address ":9001"：管理界面监听 9001 端口（可选，浏览器打开看文件）
+    command: minio server /minio_data --console-address ":9001"
+
+    healthcheck:
+      # 用 curl 访问 MinIO 健康检查接口
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ════════════════════════════════════════════════
+  # 容器3：Milvus - 向量数据库本体
+  # 作用：接收你后端的请求，执行向量搜索（ANN = 近似最近邻搜索）
+  # 你的后端代码通过 localhost:19530 连接它
+  # ════════════════════════════════════════════════
+  milvus:
+
+    # Milvus 官方镜像，2.4版本（支持混合检索）
+    image: milvusdb/milvus:v2.4-latest
+
+    container_name: milvus-standalone
+
+    # standalone = 单机模式
+    # 所有组件（query node / data node / index node）在一个进程中运行
+    # 适合场景：开发 + 中小规模生产（< 1000 万向量）
+    # 对比 cluster 模式：多节点分布式部署，适合亿级向量
+    command: ["milvus", "run", "standalone"]
+
+    environment:
+      # 告诉 Milvus 去哪里找 etcd（用容器名作为主机名，Podman 内部自动 DNS 解析）
+      ETCD_ENDPOINTS: etcd:2379
+      # 告诉 Milvus 去哪里找 MinIO
+      MINIO_ADDRESS: minio:9000
+
+    volumes:
+      - milvus-data:/var/lib/milvus
+
+    # ports = 端口映射
+    # 格式："宿主机端口:容器内端口"
+    # 效果：你在宿主机访问 localhost:19530，实际连到容器内的 19530 端口
+    ports:
+      # gRPC 端口：后端 SDK（@zilliz/milvus2-sdk-node）连接用这个
+      - "19530:19530"
+      # HTTP 健康检查端口
+      - "9091:9091"
+
+    # depends_on = 启动顺序依赖
+    # Milvus 启动时需要连接 etcd 和 MinIO
+    # 如果它们还没就绪，Milvus 会报错退出
+    # condition: service_healthy 表示等依赖容器的 healthcheck 通过后才启动 Milvus
+    depends_on:
+      etcd:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+
+    healthcheck:
+      # 访问 Milvus 自己的健康检查接口
+      test: ["CMD", "curl", "-f", "http://localhost:9091/healthz"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+# ---- volumes：声明持久化存储卷 ----
+# 在这里声明后，上面的 services 才能引用
+# Podman 会在宿主机上自动创建对应的存储目录
+# 好处：容器删了重建，数据还在（不声明 volume 的话容器删了数据就没了）
+volumes:
+  etcd-data:
+  minio-data:
+  milvus-data:
