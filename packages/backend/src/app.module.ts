@@ -7,6 +7,7 @@ import { WorkflowModule } from './modules/workflow/workflow.module';
 import { AiModule } from './modules/ai/ai.module';
 import { ExecutionModule } from './modules/execution/execution.module';
 import { AgentModule } from './modules/agent/agent.module';
+import { KnowledgeModule } from './modules/knowledge/knowledge.module';
 
 @Module({
   imports: [
@@ -34,6 +35,7 @@ import { AgentModule } from './modules/agent/agent.module';
     AiModule,
     ExecutionModule,
     AgentModule,
+    KnowledgeModule,
   ],
 })
 export class AppModule {}
