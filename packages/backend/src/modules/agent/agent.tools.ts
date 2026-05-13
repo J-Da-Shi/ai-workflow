@@ -145,6 +145,31 @@ export const AGENT_TOOLS: any[] = [
       },
     },
   },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'run_command',
+      description:
+        '在项目目录中执行 shell 命令。仅限构建、测试、lint 等安全命令。' +
+        '用于验证代码是否能正确编译和通过测试。' +
+        '如果命令执行失败，会返回错误输出，你可以根据错误信息修复代码后重试。',
+      parameters: {
+        type: 'object',
+        properties: {
+          // command: 要执行的命令
+          // AI 只能传白名单中的命令，其它会被拒绝
+          command: {
+            type: 'string',
+            description:
+              '要执行的命令。允许的命令：npm run build, npm test, npm run lint, ' +
+              'pnpm build, pnpm test, pnpm lint, npx tsc --noEmit, ' +
+              'npm install, pnpm install。其他命令会被拒绝。',
+          },
+        },
+        required: ['command'],
+      },
+    },
+  },
 ];
 
 /**
@@ -444,6 +469,95 @@ function writeFile(workDir: string, filePath: string, content: string): string {
 }
 
 /**
+ * run_command 工具实现
+ *
+ * 在项目目录中执行 shell 命令，用于验证代码（编译、测试、lint）
+ *
+ * 安全机制：
+ *  1. 白名单：只允许与定义的安全命令
+ *  2. 超时：最长 60 秒，防止命令挂起
+ *  3. 输出截断：超过 5000 字符只保留末尾 3000 字符
+ *  4. cwd 限制：只能在工作目录中执行
+ *
+ * 为什么白名单而不是黑名单：
+ *    黑名单（禁止 rm/sudo/...）永远有遗漏，AI 可能构造变体绕过
+ *    白名单（只允许 build/test/lint）确保 100% 安全
+ *
+ * @param workDir - 项目工作目录
+ * @param command - AI 传入的命令字符串
+ * @returns 命令输出（stdout + stderr）或错误信息
+ */
+function runCommand(workDir: string, command: string): string {
+  // 白名单校验
+  // 只允许这些命令前缀，其它一律拒绝
+  const allowedCommands = [
+    'npm run build',
+    'npm test',
+    'npm run lint',
+    'npm install',
+    'pnpm build',
+    'pnpm test',
+    'pnpm lint',
+    'pnpm install',
+    'npx tsc --noEmit',
+    'npx tsc',
+  ];
+
+  // 检查命令是否以白名单中的某个前缀开头
+  const isAllowed = allowedCommands.some((allowed) =>
+    command.trim().startsWith(allowed),
+  );
+
+  if (!isAllowed) {
+    return `错误：不允许执行此命令。仅支持以下命令：${allowedCommands.join(', ')}`;
+  }
+
+  try {
+    // 执行命令
+    // cwd：在工作目录中执行（不是项目根目录）
+    // timeout：60秒超时，防止命令挂起（如 npm test 卡住）
+    // encodig：返回字符串而不是 Buffer
+    // stdio：捕获 stdout 和 stderr
+    const output = execSync(command, {
+      cwd: workDir,
+      timeout: 60000,
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+
+    // 命令成功执行
+    // 截断过长的输出
+    const maxLen = 5000;
+    if (output.length > maxLen) {
+      return `[输出过长，只显示最后 ${maxLen} 字符]\n...${output.slice(-maxLen)}`;
+    }
+
+    return output || '命令执行成功（无输出）';
+  } catch (err: any) {
+    // 命令执行失败（非零退出码）
+    // err.stdout + err.stderr 包含完整的错误输出
+    // AI 需要看到这些错误信息来修复代码
+    const stdout = err.stdout || '';
+    const stderr = err.stderr || '';
+    const combined = `${stdout}\n${stderr}`.trim();
+
+    // 截断：只保留末尾 3000 字符（错误信息通常在最后）
+    const maxLen = 3000;
+    const output =
+      combined.length > maxLen
+        ? `[错误输出过长，只显示最后 ${maxLen} 字符]\n...${combined.slice(-maxLen)}`
+        : combined;
+
+    // 如果是超时
+    if (err.killed) {
+      return `错误：命令执行超时（60秒），已强制终止。命令：${command}`;
+    }
+
+    return `命令执行失败（退出码 ${err.status}）：\n${output}`;
+  }
+}
+
+/**
  * 工具执行器 - Agent Loop 的核心调度函数
  *
  * AI 返回的 tool_calls 中包含 toolName 和 toolArgs
@@ -487,6 +601,9 @@ export function executeTool(
 
       case 'write_file':
         return writeFile(workDir, toolArgs.path, toolArgs.content);
+
+      case 'run_command':
+        return runCommand(workDir, toolArgs.command);
 
       default:
         return `未知工具：${toolName}`;

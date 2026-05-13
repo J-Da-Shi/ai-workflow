@@ -163,6 +163,19 @@ export class AgentService {
 - 小文件（<100行）：直接 read_file 全量读取
 - 中文件（100-500行）：先 search_code 定位，再 read_file + startLine/endLine 片段读取
 - 大文件（>500行）：只通过 search_code + 片段读取，禁止全量
+
+## 验证与自愈
+
+  代码写完后必须验证：
+  1. 执行 run_command("npx tsc --noEmit") 检查类型错误
+  2. 如果项目有 test 脚本，执行 run_command("npm test")
+  3. 如果命令失败：
+     - 仔细阅读错误输出
+     - 定位出错的文件和行号
+     - 修复代码（read_file → 分析问题 → write_file）
+     - 再次执行验证命令
+  4. 最多重试 3 次，如果仍然失败则停止并报告剩余问题
+  5. 验证全部通过后，给出最终总结
 ${projectStructure}`;
   }
 
