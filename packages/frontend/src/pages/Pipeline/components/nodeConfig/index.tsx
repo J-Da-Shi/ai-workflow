@@ -1,7 +1,8 @@
-import { useState } from 'react';
-import { Switch, Collapse, message } from 'antd';
+import { useState, useEffect } from 'react';
+import { Switch, Collapse, message, Select } from 'antd';
 import type { NodeConfig, PromptLayers } from '../../types';
 import { updateNodeConfig } from '../../../../api/workflow';
+import { getKnowledgeBases } from '../../../../api/knowledge';
 import './index.css';
 
 interface ConfigTabProps {
@@ -26,6 +27,36 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
   const [editingKey, setEditingKey] = useState<string | null>(null);
   const [layers, setLayers] = useState<PromptLayers>({ ...config.promptLayers });
   const [editText, setEditText] = useState('');
+
+  // 知识库选择状态
+  const [kbOptions, setKbOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [selectedKbIds, setSelectedKbIds] = useState<string[]>(config.knowledgeBaseIds || []);
+
+  // 加载知识库列表
+  useEffect(() => {
+    const fetchKbs = async () => {
+      try {
+        // 获取所有知识库（暂不按 projectId 过滤，后续可加）
+        const res = await getKnowledgeBases('');
+        const list = Array.isArray(res) ? res : (res as any).data || [];
+        setKbOptions(list.map((kb: any) => ({ value: kb.id, label: `${kb.name}（${kb.chunkCount} 条）` })));
+      } catch {
+        setKbOptions([]);
+      }
+    };
+    fetchKbs();
+  }, []);
+
+  // 保存知识库选择
+  const handleSaveKb = async (ids: string[]) => {
+    setSelectedKbIds(ids);
+    try {
+      await updateNodeConfig(workflowId, nodeKey, { knowledgeBaseIds: ids });
+      message.success('知识库配置已保存');
+    } catch {
+      message.error('保存失败');
+    }
+  };
 
   // Git 配置状态
   const [gitConfig, setGitConfig] = useState({
@@ -263,6 +294,22 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
                     <button className="git-save-btn" onClick={handleSaveGit}>
                       保存 Git 配置
                     </button>
+                  </div>
+                </div>
+
+                {/* 知识库选择 */}
+                <div className="kb-selector-section">
+                  <div className="git-section-title">知识库关联</div>
+                  <div className="config-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                    <span className="config-label">选择知识库（节点执行时从选中的知识库检索参考资料）</span>
+                    <Select
+                      mode="multiple"
+                      style={{ width: '100%' }}
+                      placeholder="选择要关联的知识库"
+                      value={selectedKbIds}
+                      options={kbOptions}
+                      onChange={handleSaveKb}
+                    />
                   </div>
                 </div>
               </div>

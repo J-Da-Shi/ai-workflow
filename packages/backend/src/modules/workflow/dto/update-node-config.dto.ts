@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsOptional, IsObject, IsArray } from 'class-validator';
 
 export class UpdateNodeConfigDto {
   @IsString()
@@ -54,4 +54,8 @@ export class UpdateNodeConfigDto {
   @IsString()
   @IsOptional()
   gitBaseBranch?: string;
+
+  @IsArray()
+  @IsOptional()
+  knowledgeBaseIds: string[];
 }

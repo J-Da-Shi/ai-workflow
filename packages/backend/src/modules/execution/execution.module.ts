@@ -6,6 +6,7 @@ import { ExecutionController } from './execution.controller';
 import { WorkflowModule } from '../workflow/workflow.module';
 import { AiModule } from '../ai/ai.module';
 import { AgentModule } from '../agent/agent.module';
+import { RagModule } from '../rag/rag.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { AgentModule } from '../agent/agent.module';
     WorkflowModule,
     AiModule,
     AgentModule,
+    RagModule,
   ],
   controllers: [ExecutionController],
   providers: [ExecutionService],

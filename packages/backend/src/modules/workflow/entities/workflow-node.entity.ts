@@ -94,6 +94,11 @@ export class WorkflowNode {
   @Column({ nullable: true, default: 'main' })
   gitBaseBranch: string;
 
+  // 关联的知识库 ID 列表（PRD审核等节点用）
+  // 节点执行时从这些知识库中检索参考资料
+  @Column({ type: 'json', nullable: true })
+  knowledgeBaseIds: string[] | null;
+
   @CreateDateColumn()
   createdAt: Date;
 

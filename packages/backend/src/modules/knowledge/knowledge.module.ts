@@ -27,6 +27,7 @@ import { KnowledgeController } from './knowledge.controller';
 import { KnowledgeService } from './knowledge.service';
 import { MilvusService } from './milvus.service';
 import { EmbeddingService } from './embedding.service';
+import { DocumentProcessorService } from './document-processor.service';
 
 @Module({
   imports: [
@@ -39,7 +40,12 @@ import { EmbeddingService } from './embedding.service';
     ]),
   ],
   controllers: [KnowledgeController],
-  providers: [KnowledgeService, MilvusService, EmbeddingService],
+  providers: [
+    KnowledgeService,
+    MilvusService,
+    EmbeddingService,
+    DocumentProcessorService,
+  ],
   // 导出供其它模块使用
   exports: [KnowledgeService, MilvusService, EmbeddingService],
 })

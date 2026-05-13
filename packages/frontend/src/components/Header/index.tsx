@@ -7,6 +7,7 @@ import './index.css';
 const navItems = [
   { key: '/', label: '工作台' },
   { key: '/pipeline', label: '流水线' },
+  { key: '/knowledge', label: '知识库' },
   { key: '/settings', label: '系统设置' },
 ];
 

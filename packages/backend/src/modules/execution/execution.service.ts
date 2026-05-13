@@ -8,6 +8,7 @@ import { Repository } from 'typeorm';
 import { AiService } from '../ai/ai.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { AgentService, AgentSSEEvent } from '../agent/agent.service';
+import { PrdReviewService } from '../rag/prd-review.service';
 
 @Injectable()
 export class ExecutionService {
@@ -20,6 +21,8 @@ export class ExecutionService {
     private aiService: AiService,
 
     private agentService: AgentService,
+
+    private prdReviewService: PrdReviewService,
   ) {}
 
   // 获取所有节点执行状态
@@ -426,6 +429,25 @@ export class ExecutionService {
           }
         }
 
+        execution.status = 'waiting';
+        await this.executionRepo.save(execution);
+      } else if (nodeConfig.nodeType === 'PRD审核') {
+        // PRD审核：RAG 增强的 AI 审核
+        // 1. 获取 PRD 内容（来自上游节点输出）
+        const prdContent = input || '请根据 System Prompt 中的要求开始工作。';
+
+        // 2. 调 PrdReviewService 执行审核（R + A + G 三步）
+        //    knowledgeBaseIds 从节点配置读取（用户选了哪些知识库）
+        //    systemPrompt 作为用户自定义审核指令传入
+        const reviewResult = await this.prdReviewService.executePrdReview(
+          prdContent,
+          nodeConfig.knowledgeBaseIds || [],
+          systemPrompt,
+        );
+
+        // 3. 保存结果
+        execution.output = reviewResult.output;
+        execution.summary = reviewResult.summary;
         execution.status = 'waiting';
         await this.executionRepo.save(execution);
       } else {

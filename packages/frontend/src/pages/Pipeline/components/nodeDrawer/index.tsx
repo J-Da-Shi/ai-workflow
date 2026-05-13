@@ -3,6 +3,7 @@ import { Tabs, Drawer, Spin, message } from 'antd';
 import type { NodeDrawerProps, NodeConfig } from '../../types';
 import { getNodeConfig } from '../../../../api/workflow';
 import ConfigTab from '../nodeConfig';
+import NodeChat from '../nodeChat';
 import NodeRun from '../nodeRun';
 import './index.css';
 
@@ -141,6 +142,11 @@ export default function NodeDrawer({
               ) : (
                 <div>暂无配置</div>
               ),
+            },
+            {
+              key: 'chat',
+              label: '对话',
+              children: <NodeChat workflowId={workflowId} nodeKey={node.key} />,
             },
             {
               key: 'run',

@@ -4,6 +4,7 @@ import Dashboard from './pages/Dashboard';
 import Pipeline from './pages/Pipeline';
 import StageDetail from './pages/StageDetail';
 import Settings from './pages/Settings';
+import Knowledge from './pages/Knowledge';
 import AuthRoute from './components/AuthRoute';
 import Layout from './components/Layout';
 
@@ -26,6 +27,8 @@ function App() {
           <Route path="/pipeline" element={<Pipeline />} />
           <Route path="/stage-detail" element={<StageDetail />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/knowledge" element={<Knowledge />} />
+          <Route path="/knowledge/:projectId" element={<Knowledge />} />
         </Route>
       </Routes>
     </BrowserRouter>

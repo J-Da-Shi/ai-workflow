@@ -8,6 +8,7 @@ import { AiModule } from './modules/ai/ai.module';
 import { ExecutionModule } from './modules/execution/execution.module';
 import { AgentModule } from './modules/agent/agent.module';
 import { KnowledgeModule } from './modules/knowledge/knowledge.module';
+import { RagModule } from './modules/rag/rag.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { KnowledgeModule } from './modules/knowledge/knowledge.module';
     ExecutionModule,
     AgentModule,
     KnowledgeModule,
+    RagModule,
   ],
 })
 export class AppModule {}

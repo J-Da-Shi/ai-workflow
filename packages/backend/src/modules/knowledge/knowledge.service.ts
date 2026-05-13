@@ -17,6 +17,10 @@ import { KnowledgeDocument } from './entities/knowledge-document.entity';
 import { KnowledgeChunk } from './entities/knowledge-chunk.entity';
 import { MilvusService } from './milvus.service';
 import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto';
+import { EmbeddingService } from './embedding.service';
+import { DocumentProcessorService } from './document-processor.service';
+import { v4 as uuidv4 } from 'uuid';
+import { CreateEntryDto } from './dto/create-entry.dto';
 
 @Injectable()
 export class KnowledgeService {
@@ -33,6 +37,9 @@ export class KnowledgeService {
 
     // 注意 MilvusService（删除知识库时需要同步清理 Milvus 中的向量）
     private milvusService: MilvusService,
+
+    private embeddingService: EmbeddingService,
+    private documentProcessor: DocumentProcessorService,
   ) {}
 
   /**
@@ -99,7 +106,7 @@ export class KnowledgeService {
     // 先确认存在
     await this.getKnowledgeBase(id);
     // 清理 Milvus 中该知识库的所有向量
-    await this.milvusService.deleteByFilter(`knowledge_base_id == ${id}`);
+    await this.milvusService.deleteByFilter(`knowledge_base_id == "${id}"`);
     // 删除 MySQL 记录（CASCADE 会自动删 documents 和 chunks）
     await this.knowledgeBaseRepo.delete(id);
   }
@@ -113,7 +120,7 @@ export class KnowledgeService {
   async listDocuments(knowledgeBaseId: string): Promise<KnowledgeDocument[]> {
     return this.knowledgeDocumentRepo.find({
       where: { knowledgeBaseId },
-      select: ['id'],
+      order: { createdAt: 'DESC' },
     });
   }
 
@@ -137,5 +144,190 @@ export class KnowledgeService {
 
     // 删除 MySQL 记录（CASCADE 会自动删 chunks）
     await this.knowledgeDocumentRepo.delete(documentId);
+  }
+
+  /**
+   * 文档处理管线：解析 -> 切片 -> Embedding -> 入库
+   *
+   * 调用时机；用户上传文件后，Controller 保存文件到磁盘，然后调这个方法
+   *
+   * 完整流程：
+   *  1. 创建 document 记录（status：processing）
+   *  2. 解析文档提取纯文本
+   *  3. 切片（递归字符分割，~512 token/片，200字符重叠）
+   *  4. 批量 Embedding（每批 20 条，失败重试 3 次）
+   *  5. 存入 Milvus（向量 + 元数据）
+   *  6. 存入 MySQL（chunk 记录）
+   *  7. 更新 document 状态 + 知识库计数
+   *
+   * 如果任何步骤失败：document.status = 'failed', 记录错误信息
+   *
+   * @param knowledgeBaseId   - 知识库 ID
+   * @param fileName          - 原始文件名
+   * @param filePath          - 文件在磁盘上的路径
+   * @param fileType          - 文件类型
+   * @param fileSize          - 文件大小（字节）
+   */
+  async processDocument(
+    knowledgeBaseId: string,
+    fileName: string,
+    filePath: string,
+    fileType: string,
+    fileSize: number,
+  ): Promise<void> {
+    // 获取知识库信息（需要 projectId）
+    const kb = await this.getKnowledgeBase(knowledgeBaseId);
+
+    // 第一步：创建 document 记录
+    const doc = this.knowledgeDocumentRepo.create({
+      knowledgeBaseId,
+      fileName,
+      fileType,
+      filePath,
+      fileSize,
+      status: 'processing',
+    });
+    await this.knowledgeDocumentRepo.save(doc);
+
+    try {
+      // 第二步：解析文档提取纯文本
+      const text = await this.documentProcessor.parseDocument(
+        filePath,
+        fileType,
+      );
+
+      // 第三步：切片
+      const chunks = this.documentProcessor.splitText(text);
+
+      if (chunks.length === 0) {
+        doc.status = 'completed';
+        doc.chunkCount = 0;
+        await this.knowledgeDocumentRepo.save(doc);
+        return;
+      }
+
+      // 第四步：批量 Embedding
+      const vectors = await this.embeddingService.embedBatch(chunks);
+
+      // 第五步：存入 Milvus
+      // 为每个 chunk 生成 UUID（M有SQL 和 Milvus 共用同一个 ID）
+      const milvusData = chunks.map((content, index) => ({
+        id: uuidv4(),
+        knowledge_base_id: knowledgeBaseId,
+        project_id: kb.projectId,
+        document_type: fileType,
+        content,
+        embedding: vectors[index],
+      }));
+
+      await this.milvusService.insert(milvusData);
+
+      // 第六步：存入 MySQL（chunk 记录）
+      const chunkEntities = milvusData.map((item, index) =>
+        this.chunkRepo.create({
+          id: item.id,
+          documentId: doc.id,
+          knowledgeBaseId,
+          chunkIndex: index,
+          content: item.content,
+        }),
+      );
+      await this.chunkRepo.save(chunkEntities);
+
+      // 第七步：更新状态和计数
+      doc.status = 'completed';
+      doc.chunkCount = chunks.length;
+      await this.knowledgeDocumentRepo.save(doc);
+
+      // 更新知识库的计数
+      kb.documentCount += 1;
+      kb.chunkCount += chunks.length;
+      await this.knowledgeBaseRepo.save(kb);
+    } catch (err: unknown) {
+      // 任何步骤失败：标记 document 为 failed
+      const errMsg = err instanceof Error ? err.message : '文档处理失败';
+      doc.status = 'failed';
+      doc.error = errMsg;
+      await this.knowledgeDocumentRepo.save(doc);
+    }
+  }
+
+  /**
+   * 手动录入知识条目
+   *
+   * 和文件上传的区别：
+   *  上传文件 -> parseDocument 解析 -> 切片 -> 入库
+   *  手动录入 -> 直接拿 content 文本 -> 切片 -> 入库（跳过解析）
+   *
+   * @param knowledgeBaseId - 知识库 ID
+   * @param dto             - { title, content }
+   */
+  async createManualEntry(
+    knowledgeBaseId: string,
+    dto: CreateEntryDto,
+  ): Promise<void> {
+    const kb = await this.getKnowledgeBase(knowledgeBaseId);
+
+    // 创建 document 记录（fileType = ‘manual’）
+    const doc = this.knowledgeDocumentRepo.create({
+      knowledgeBaseId,
+      fileName: dto.title,
+      fileType: 'manual',
+      fileSize: Buffer.byteLength(dto.content, 'utf-8'),
+      status: 'processing',
+    });
+    await this.knowledgeDocumentRepo.save(doc);
+
+    try {
+      // 切片（和文件上传走同杨的切片逻辑）
+      const chunks = this.documentProcessor.splitText(dto.content);
+
+      if (chunks.length === 0) {
+        doc.status = 'completed';
+        doc.chunkCount = 0;
+        await this.knowledgeDocumentRepo.save(doc);
+        return;
+      }
+      // Embedding
+      const vectors = await this.embeddingService.embedBatch(chunks);
+
+      // 存入 Milvus
+      const milvusData = chunks.map((content, index) => ({
+        id: uuidv4(),
+        knowledge_base_id: knowledgeBaseId,
+        project_id: kb.projectId,
+        document_type: 'manual',
+        content,
+        embedding: vectors[index],
+      }));
+
+      await this.milvusService.insert(milvusData);
+
+      // 存入 MySQL
+      const chunkEntities = milvusData.map((item, index) =>
+        this.chunkRepo.create({
+          id: item.id,
+          documentId: doc.id,
+          knowledgeBaseId,
+          chunkIndex: index,
+          content: item.content,
+        }),
+      );
+      await this.chunkRepo.save(chunkEntities);
+
+      // 更新状态和计数
+      doc.status = 'completed';
+      doc.chunkCount = chunks.length;
+      await this.knowledgeDocumentRepo.save(doc);
+
+      kb.documentCount += 1;
+      kb.chunkCount += chunks.length;
+      await this.knowledgeBaseRepo.save(kb);
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : '录入处理失败';
+      doc.status = 'failed';
+      doc.error = errMsg;
+      await this.knowledgeDocumentRepo.save(doc);
+    }
   }
 }

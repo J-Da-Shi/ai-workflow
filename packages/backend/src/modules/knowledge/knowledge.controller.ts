@@ -17,10 +17,17 @@ import {
   Query,
   Param,
   Delete,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import * as fs from 'fs';
+import * as path from 'path';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { KnowledgeService } from './knowledge.service';
 import { CreateKnowledgeBaseDto } from './dto/create-knowledge-base.dto';
+import { CreateEntryDto } from './dto/create-entry.dto';
 
 @Controller('knowledge')
 @UseGuards(JwtAuthGuard)
@@ -44,7 +51,7 @@ export class KnowledgeController {
    */
   @Get('bases')
   list(@Query('projectId') projectId: string) {
-    return this.knowledgeService.listDocuments(projectId);
+    return this.knowledgeService.listKnowledgeBases(projectId);
   }
 
   /**
@@ -78,8 +85,90 @@ export class KnowledgeController {
    * 删除单个文档（级联删除切片 + Milvus 向量）
    * DELETE /knowledge/documents/:docId
    */
-  @Delete('document/:docId')
+  @Delete('documents/:docId')
   removeDocument(@Param('docId') docId: string) {
     return this.knowledgeService.deleteDocument(docId);
+  }
+
+  /**
+   * 上传文档
+   * POST /knowledge/bases/:id/docuemnts/upload
+   *
+   * 使用 multer 处理文件上传：
+   *  - FileInterceptor('file')：从请求中提取名为 “file” 的文件
+   *  - diskStorage: 文件保存到磁盘（AI_WORKSPACE_DIR/knowledge/uploads/）
+   *  - 文件名用时间戳 + 原始名，避免重复覆盖
+   */
+  @Post('bases/:id/documents/upload')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (req, file, cb) => {
+          const dir = path.join(
+            process.env.AI_WORKSPACE_DIR || '/tmp/ai-workspace',
+            'knowledge',
+            'uploads',
+          );
+          fs.mkdirSync(dir, { recursive: true });
+          cb(null, dir);
+        },
+        filename: (req, file, cb) => {
+          // 解码中文文件名（multer 把中文编码为 latin1，需要转回 utf8）
+          const originalName = Buffer.from(
+            file.originalname,
+            'latin1',
+          ).toString('utf8');
+          const name = `${Date.now()}-${originalName}`;
+          cb(null, name);
+        },
+      }),
+    }),
+  )
+  uploadDocument(
+    @Param('id') knowledgeBaseId: string,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    // 解码中文文件名（multer 把中文编码为 latin1，需要转回 utf8）
+    const originalName = Buffer.from(file.originalname, 'latin1').toString(
+      'utf8',
+    );
+
+    // 根据文件扩展名判断类型
+    const ext = path.extname(originalName).toLowerCase();
+    const typeMap: Record<string, string> = {
+      '.pdf': 'pdf',
+      '.docx': 'word',
+      '.doc': 'word',
+      '.md': 'markdown',
+      '.txt': 'markdown',
+    };
+    const fileType = typeMap[ext] || 'markdown';
+
+    // 触发处理管线（异步处理，不阻塞响应）
+    void this.knowledgeService.processDocument(
+      knowledgeBaseId,
+      originalName,
+      file.path,
+      fileType,
+      file.size,
+    );
+
+    // 立即返回（不等处理完成）
+    return { message: '文件已上传，正在处理中' };
+  }
+
+  /**
+   * 手动录入知识条目
+   * POST /knowledge/bases/:id/entries
+   * Body: { title, content }
+   */
+  @Post('bases/:id/entries')
+  createEntry(
+    @Param('id') knowledgeBaseId: string,
+    @Body() dto: CreateEntryDto,
+  ) {
+    // 手动录入也走异步处理（切片 + Embedding 可能需要几秒）
+    void this.knowledgeService.createManualEntry(knowledgeBaseId, dto);
+    return { message: '条目已提交，正在处理中' };
   }
 }

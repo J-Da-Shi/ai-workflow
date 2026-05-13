@@ -61,10 +61,10 @@ export class EmbeddingService {
    *
    * 为什么需要批量：
    *    一个 PDF 切成 50 个片段，逐条调 API = 50 次请求（慢 + 容易限流）
-   *    批量调 = 3 次请求（每次 20 条），快且省
+   *    批量调 = 3 次请求（每次 10 条），快且省
    *
    * 策略：
-   *    - 每批最多 20 条（OpenAI API 单次最多 2048 条，但 20 条更稳定）
+   *    - 每批最多 10 条（OpenAI API 单次最多 2048 条，但 10 条更稳定）
    *    - 失败自动重试 3 次（网络抖动 / 限流时不会整体失败）
    *    - 重试间隔指数增长（1s -> 2s -> 4s，避免频繁请求被封）
    *
@@ -73,8 +73,8 @@ export class EmbeddingService {
    */
   async embedBatch(texts: string[]): Promise<number[][]> {
     const vectors: number[][] = [];
-    // 每批 20 条
-    const batchSize = 20;
+    // 每批 10 条
+    const batchSize = 10;
     // 最多重试 3 次
     const maxRetries = 3;
 
