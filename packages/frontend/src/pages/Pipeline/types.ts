@@ -12,6 +12,10 @@ export interface StageNodeData extends Record<string, unknown> {
   meta?: string;
   summary?: string;
   workflowId?: string;
+  backendType?: string;
+  ragEnabled?: boolean;
+  verification?: 'pending' | 'running' | 'passed' | 'failed';
+  diffCount?: number;
 }
 
 // 节点面板中的可拖拽项（不含运行时状态）
@@ -48,6 +52,7 @@ export interface NodeConfig {
   gitPlatform?: string;
   gitToken?: string;
   gitBaseBranch?: string;
+  knowledgeBaseIds?: string[];
 }
 
 // 节点执行记录

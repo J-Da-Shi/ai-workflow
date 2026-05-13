@@ -1,994 +1,992 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Dev Workflow - UI 原型 v2</title>
+  <title>AI Dev Workflow - Interview Prototype</title>
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f0f2f5; color: #333; }
+    :root {
+      --bg: #f4f6f8;
+      --panel: #ffffff;
+      --panel-soft: #f8fafc;
+      --line: #dce3ea;
+      --line-strong: #c5d0dc;
+      --text: #17202a;
+      --muted: #667383;
+      --muted-2: #8b98a8;
+      --blue: #2563eb;
+      --blue-soft: #eaf1ff;
+      --green: #16a34a;
+      --green-soft: #eaf8ef;
+      --orange: #d97706;
+      --orange-soft: #fff4e3;
+      --red: #dc2626;
+      --red-soft: #fff0f0;
+      --violet: #7c3aed;
+      --violet-soft: #f2edff;
+      --shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 8px 24px rgba(15, 23, 42, 0.05);
+      --radius: 8px;
+    }
 
-    /* ===== Navigation ===== */
-    .nav { background: #1890ff; padding: 0 24px; display: flex; align-items: center; gap: 16px; position: sticky; top: 0; z-index: 100; height: 48px; }
-    .nav a { color: #fff; text-decoration: none; padding: 6px 16px; border-radius: 4px; font-size: 14px; cursor: pointer; }
-    .nav a:hover, .nav a.active { background: rgba(255,255,255,0.2); }
-    .nav .title { font-size: 18px; font-weight: bold; color: #fff; margin-right: 24px; }
-    .nav-left { display: flex; align-items: center; gap: 4px; }
-    .nav-right { margin-left: auto; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 4px 8px; border-radius: 4px; }
-    .nav-right:hover { background: rgba(255,255,255,0.2); }
-    .nav-avatar { width: 28px; height: 28px; border-radius: 50%; background: rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; font-size: 13px; color: #fff; }
-    .nav-username { color: #fff; font-size: 13px; }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      letter-spacing: 0;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
 
-    /* ===== Pages ===== */
-    .page { display: none; min-height: calc(100vh - 48px); }
-    .page.active { display: block; }
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 64px 1fr;
+    }
 
-    /* ===== Common ===== */
-    .btn { padding: 8px 20px; border-radius: 6px; border: none; cursor: pointer; font-size: 14px; }
-    .btn-primary { background: #1890ff; color: #fff; }
-    .btn-primary:hover { background: #40a9ff; }
-    .btn-danger { background: #fff; color: #ff4d4f; border: 1px solid #ff4d4f; }
-    .btn-danger:hover { background: #fff1f0; }
-    .btn-ghost { background: #fff; color: #333; border: 1px solid #d9d9d9; }
-    .btn-ghost:hover { border-color: #1890ff; color: #1890ff; }
-    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
-    .tag-blue { background: #e6f7ff; color: #1890ff; }
-    .tag-green { background: #f6ffed; color: #52c41a; }
-    .tag-orange { background: #fff7e6; color: #fa8c16; }
-    .tag-red { background: #fff1f0; color: #ff4d4f; }
+    .rail {
+      background: #111827;
+      color: #d1d5db;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 14px 8px;
+      gap: 12px;
+    }
+    .brand {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      background: #fff;
+      color: #111827;
+      display: grid;
+      place-items: center;
+      font-weight: 800;
+      font-size: 15px;
+      margin-bottom: 10px;
+    }
+    .rail-btn {
+      width: 40px;
+      height: 40px;
+      border: 0;
+      border-radius: 8px;
+      color: #cbd5e1;
+      background: transparent;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+    }
+    .rail-btn.active { background: #1f2937; color: #fff; }
+    .rail-spacer { flex: 1; }
+    .avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: #374151;
+      color: #fff;
+      font-size: 12px;
+      font-weight: 700;
+    }
 
-    .form-group { margin-bottom: 20px; }
-    .form-group label { display: block; margin-bottom: 6px; font-size: 13px; color: #666; }
-    .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #d9d9d9; border-radius: 6px; font-size: 14px; outline: none; font-family: inherit; }
-    .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
+    .main {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: 58px 1fr;
+    }
 
-    .annotation { background: #fffbe6; border: 1px solid #ffe58f; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; font-size: 13px; color: #ad6800; }
-    .page-label { position: fixed; bottom: 16px; right: 16px; background: #1890ff; color: #fff; padding: 8px 16px; border-radius: 20px; font-size: 13px; z-index: 200; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+    .topbar {
+      background: var(--panel);
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 22px;
+    }
+    .top-title {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      min-width: 0;
+    }
+    .top-title h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 720;
+      white-space: nowrap;
+    }
+    .top-title span {
+      color: var(--muted);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .top-actions { display: flex; gap: 8px; align-items: center; }
 
-    /* ===== Page 1: Login ===== */
-    .login-page { display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-    .login-card { background: #fff; border-radius: 12px; padding: 48px 40px; width: 420px; box-shadow: 0 8px 40px rgba(0,0,0,0.15); }
-    .login-card h1 { text-align: center; font-size: 24px; margin-bottom: 8px; color: #1890ff; }
-    .login-card .subtitle { text-align: center; color: #999; margin-bottom: 32px; font-size: 14px; }
-    .tabs { display: flex; border-bottom: 1px solid #e8e8e8; margin-bottom: 24px; }
-    .tab-item { flex: 1; text-align: center; padding: 12px; cursor: pointer; color: #999; font-size: 15px; border-bottom: 2px solid transparent; }
-    .tab-item.active { color: #1890ff; border-bottom-color: #1890ff; }
+    .btn {
+      height: 34px;
+      border: 1px solid var(--line-strong);
+      border-radius: 7px;
+      padding: 0 13px;
+      background: #fff;
+      color: var(--text);
+      font-size: 13px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .btn.primary {
+      border-color: var(--blue);
+      background: var(--blue);
+      color: #fff;
+    }
+    .btn.danger {
+      border-color: #fecaca;
+      color: var(--red);
+      background: #fff;
+    }
+    .icon-btn {
+      width: 34px;
+      padding: 0;
+      justify-content: center;
+    }
 
-    /* ===== Page 2: Dashboard ===== */
-    .dashboard { padding: 24px; }
-    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .dashboard-header h2 { font-size: 22px; }
-    .stats { display: flex; gap: 16px; margin-bottom: 24px; }
-    .stat-card { flex: 1; background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .stat-card .number { font-size: 28px; font-weight: bold; color: #1890ff; }
-    .stat-card .label { font-size: 13px; color: #999; margin-top: 4px; }
-    .project-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .project-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; transition: box-shadow 0.2s; }
-    .project-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-    .project-card h3 { font-size: 16px; margin-bottom: 8px; }
-    .project-card .desc { font-size: 13px; color: #666; margin-bottom: 12px; }
-    .project-card .meta { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #999; }
+    .workspace {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 248px minmax(520px, 1fr) 420px;
+      gap: 14px;
+      padding: 14px;
+      overflow: hidden;
+    }
 
-    /* ===== Page 3: Project Detail ===== */
-    .project-detail { padding: 24px; }
-    .project-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .project-detail-header h2 { font-size: 22px; display: flex; align-items: center; gap: 12px; }
-    .detail-tabs { display: flex; gap: 0; margin-bottom: 24px; border-bottom: 1px solid #e8e8e8; }
-    .detail-tab { padding: 12px 24px; cursor: pointer; font-size: 14px; color: #666; border-bottom: 2px solid transparent; }
-    .detail-tab.active { color: #1890ff; border-bottom-color: #1890ff; }
-    .workflow-list { display: flex; flex-direction: column; gap: 12px; }
-    .workflow-card { background: #fff; border-radius: 8px; padding: 16px 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; cursor: pointer; transition: box-shadow 0.2s; }
-    .workflow-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-    .workflow-card-left { display: flex; align-items: center; gap: 16px; }
-    .workflow-card-icon { width: 40px; height: 40px; border-radius: 8px; background: #e6f7ff; color: #1890ff; display: flex; align-items: center; justify-content: center; font-size: 18px; }
-    .workflow-card-title { font-size: 15px; font-weight: 500; }
-    .workflow-card-desc { font-size: 12px; color: #999; margin-top: 2px; }
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      min-width: 0;
+      overflow: hidden;
+    }
+    .panel-head {
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .panel-sub {
+      font-size: 12px;
+      color: var(--muted);
+    }
 
-    /* ===== Page 4: Pipeline Canvas ===== */
-    .pipeline-page { display: flex; height: calc(100vh - 48px); overflow: hidden; }
+    .left-panel {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      min-height: 0;
+    }
+    .project-health {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 8px;
+    }
+    .health-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .health-row strong {
+      color: var(--text);
+      font-size: 13px;
+    }
+    .node-library {
+      overflow: auto;
+      padding: 12px;
+    }
+    .group-label {
+      font-size: 11px;
+      color: var(--muted-2);
+      font-weight: 700;
+      margin: 14px 2px 8px;
+    }
+    .group-label:first-child { margin-top: 0; }
+    .node-palette-item {
+      height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel-soft);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 10px;
+      margin-bottom: 8px;
+      font-size: 13px;
+    }
+    .node-palette-item:hover { border-color: var(--blue); background: var(--blue-soft); }
+    .node-mark {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      flex: 0 0 auto;
+    }
+    .m-blue { background: var(--blue); }
+    .m-green { background: var(--green); }
+    .m-orange { background: var(--orange); }
+    .m-red { background: var(--red); }
+    .m-violet { background: var(--violet); }
+    .knowledge-strip {
+      border-top: 1px solid var(--line);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      background: #fbfcfe;
+    }
+    .kb-mini {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px;
+      background: #fff;
+    }
+    .kb-mini-title {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 650;
+      margin-bottom: 6px;
+    }
+    .kb-mini-meta {
+      color: var(--muted);
+      font-size: 11px;
+      display: flex;
+      justify-content: space-between;
+    }
 
-    /* Node Panel */
-    .node-panel { width: 220px; background: #fff; border-right: 1px solid #e8e8e8; display: flex; flex-direction: column; flex-shrink: 0; }
-    .node-panel-header { padding: 16px; border-bottom: 1px solid #e8e8e8; font-size: 14px; font-weight: 600; }
-    .node-panel-list { padding: 12px; overflow-y: auto; flex: 1; }
-    .node-panel-group { margin-bottom: 16px; }
-    .node-panel-group-title { font-size: 12px; color: #999; margin-bottom: 8px; padding-left: 4px; }
-    .node-item { padding: 10px 12px; background: #fafafa; border: 1px solid #e8e8e8; border-radius: 6px; margin-bottom: 8px; cursor: grab; font-size: 13px; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
-    .node-item:hover { border-color: #1890ff; background: #e6f7ff; }
-    .node-icon { width: 24px; height: 24px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; flex-shrink: 0; }
-    .node-icon.blue { background: #1890ff; } .node-icon.green { background: #52c41a; } .node-icon.orange { background: #fa8c16; }
-    .node-icon.purple { background: #722ed1; } .node-icon.red { background: #ff4d4f; } .node-icon.cyan { background: #13c2c2; }
+    .canvas-panel {
+      position: relative;
+      display: grid;
+      grid-template-rows: 48px 1fr 190px;
+      min-height: 0;
+    }
+    .workflow-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 14px;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+    .status-cluster {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .chip {
+      height: 24px;
+      padding: 0 8px;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      white-space: nowrap;
+      border: 1px solid transparent;
+    }
+    .chip.blue { color: var(--blue); background: var(--blue-soft); border-color: #c7d8ff; }
+    .chip.green { color: var(--green); background: var(--green-soft); border-color: #c9ead4; }
+    .chip.orange { color: var(--orange); background: var(--orange-soft); border-color: #ffdfad; }
+    .chip.red { color: var(--red); background: var(--red-soft); border-color: #ffcaca; }
+    .chip.violet { color: var(--violet); background: var(--violet-soft); border-color: #d9ccff; }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: currentColor;
+    }
 
-    /* Canvas */
-    .canvas-area { flex: 1; display: flex; flex-direction: column; background: #f7f8fa; }
-    .canvas-toolbar { padding: 12px 20px; background: #fff; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
-    .canvas-toolbar-left { display: flex; align-items: center; gap: 12px; }
-    .canvas-toolbar-left h3 { font-size: 16px; margin: 0; }
-    .canvas-toolbar-right { display: flex; gap: 8px; }
-    .canvas-body { flex: 1; position: relative; overflow: auto; }
-    .canvas-grid { position: absolute; inset: 0; background-image: radial-gradient(circle, #d9d9d9 1px, transparent 1px); background-size: 20px 20px; }
-    .canvas-nodes { position: absolute; inset: 0; padding: 40px; }
+    .canvas {
+      position: relative;
+      overflow: auto;
+      background:
+        radial-gradient(circle, #d7dee8 1px, transparent 1px) 0 0 / 20px 20px,
+        #f8fafc;
+    }
+    .flow {
+      position: relative;
+      width: 980px;
+      height: 560px;
+    }
+    .edge {
+      position: absolute;
+      height: 2px;
+      background: var(--line-strong);
+      transform-origin: left center;
+    }
+    .edge::after {
+      content: "";
+      position: absolute;
+      right: -2px;
+      top: -4px;
+      border-left: 8px solid var(--line-strong);
+      border-top: 5px solid transparent;
+      border-bottom: 5px solid transparent;
+    }
+    .edge.active {
+      background: var(--green);
+    }
+    .edge.active::after { border-left-color: var(--green); }
+    .edge.e1 { width: 110px; left: 205px; top: 126px; }
+    .edge.e2 { width: 110px; left: 435px; top: 126px; }
+    .edge.e3 { width: 112px; left: 665px; top: 126px; }
+    .edge.e4 { width: 112px; left: 318px; top: 330px; transform: rotate(0deg); }
+    .edge.e5 { width: 112px; left: 548px; top: 330px; }
 
-    /* Canvas Nodes */
-    .canvas-node { position: absolute; width: 180px; background: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border-left: 4px solid #d9d9d9; cursor: pointer; }
-    .canvas-node:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
-    .canvas-node.running { border-left-color: #1890ff; } .canvas-node.waiting { border-left-color: #faad14; }
-    .canvas-node.approved { border-left-color: #52c41a; } .canvas-node.rejected { border-left-color: #ff4d4f; }
-    .canvas-node-header { padding: 10px 12px; border-bottom: 1px solid #f0f0f0; display: flex; align-items: center; gap: 8px; }
-    .canvas-node-title { font-size: 13px; font-weight: 500; }
-    .canvas-node-body { padding: 10px 12px; }
-    .canvas-node-status { font-size: 12px; padding: 2px 8px; border-radius: 4px; display: inline-block; }
-    .canvas-node-status.pending { background: #fafafa; color: #999; }
-    .canvas-node-status.running { background: #e6f7ff; color: #1890ff; }
-    .canvas-node-status.waiting { background: #fff7e6; color: #faad14; }
-    .canvas-node-status.approved { background: #f6ffed; color: #52c41a; }
-    .canvas-node-meta { font-size: 11px; color: #999; margin-top: 6px; }
+    .flow-node {
+      position: absolute;
+      width: 178px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-left: 5px solid var(--line-strong);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .flow-node.selected {
+      outline: 2px solid #9bbcff;
+      outline-offset: 2px;
+    }
+    .flow-node.approved { border-left-color: var(--green); }
+    .flow-node.running { border-left-color: var(--blue); }
+    .flow-node.waiting { border-left-color: var(--orange); }
+    .flow-node.failed { border-left-color: var(--red); }
+    .flow-node.n1 { left: 28px; top: 74px; }
+    .flow-node.n2 { left: 258px; top: 74px; }
+    .flow-node.n3 { left: 488px; top: 74px; }
+    .flow-node.n4 { left: 718px; top: 74px; }
+    .flow-node.n5 { left: 142px; top: 278px; }
+    .flow-node.n6 { left: 372px; top: 278px; }
+    .flow-node.n7 { left: 602px; top: 278px; }
+    .node-top {
+      height: 42px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      padding: 0 10px;
+      border-bottom: 1px solid var(--line);
+    }
+    .node-title {
+      font-size: 13px;
+      font-weight: 720;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .node-body {
+      padding: 9px 10px 10px;
+      display: grid;
+      gap: 7px;
+    }
+    .node-meta {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 11px;
+    }
+    .node-progress {
+      height: 5px;
+      border-radius: 999px;
+      background: #edf1f5;
+      overflow: hidden;
+    }
+    .node-progress span {
+      display: block;
+      height: 100%;
+      border-radius: inherit;
+      background: var(--green);
+    }
+    .node-progress.blue span { background: var(--blue); }
+    .node-progress.orange span { background: var(--orange); }
 
-    /* Connections */
-    .canvas-connections { position: absolute; inset: 0; pointer-events: none; }
-    .canvas-connections line { stroke: #c0c0c0; stroke-width: 2; }
+    .bottom-console {
+      border-top: 1px solid var(--line);
+      background: #fff;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 0;
+    }
+    .console-section {
+      min-width: 0;
+      padding: 12px 14px;
+      overflow: hidden;
+    }
+    .console-section + .console-section {
+      border-left: 1px solid var(--line);
+    }
+    .section-title {
+      font-size: 12px;
+      font-weight: 760;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .rag-hit {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 8px;
+      margin-bottom: 8px;
+      background: #fbfcfe;
+    }
+    .rag-hit-head {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      margin-bottom: 5px;
+      color: var(--muted);
+    }
+    .rag-hit p {
+      margin: 0;
+      color: #334155;
+      font-size: 12px;
+      line-height: 1.45;
+      max-height: 36px;
+      overflow: hidden;
+    }
+    .verify-list {
+      display: grid;
+      gap: 8px;
+    }
+    .verify-row {
+      display: grid;
+      grid-template-columns: 92px 1fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .verify-bar {
+      height: 6px;
+      border-radius: 999px;
+      background: #edf1f5;
+      overflow: hidden;
+    }
+    .verify-bar span {
+      display: block;
+      height: 100%;
+      background: var(--green);
+      border-radius: inherit;
+    }
 
-    /* ===== Drawer ===== */
-    .drawer-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 300; }
-    .drawer-overlay.open { display: block; }
-    .node-drawer { position: fixed; top: 0; right: -820px; width: 820px; height: 100vh; background: #fff; box-shadow: -4px 0 24px rgba(0,0,0,0.12); z-index: 301; transition: right 0.3s; display: flex; flex-direction: column; }
-    .node-drawer.open { right: 0; }
-    .drawer-header { padding: 16px 20px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
-    .drawer-header h3 { font-size: 16px; margin: 0; display: flex; align-items: center; gap: 8px; }
-    .drawer-close { cursor: pointer; color: #999; font-size: 20px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 4px; }
-    .drawer-close:hover { background: #f5f5f5; }
+    .right-panel {
+      display: grid;
+      grid-template-rows: 46px auto 1fr auto;
+      min-height: 0;
+    }
+    .tabs {
+      height: 46px;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      border-bottom: 1px solid var(--line);
+    }
+    .tab {
+      border: 0;
+      background: #fff;
+      color: var(--muted);
+      font-size: 12px;
+      border-bottom: 2px solid transparent;
+    }
+    .tab.active {
+      color: var(--blue);
+      border-bottom-color: var(--blue);
+      font-weight: 700;
+    }
+    .node-summary {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      gap: 10px;
+    }
+    .summary-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .summary-title h2 {
+      margin: 0;
+      font-size: 16px;
+    }
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+    .metric {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px;
+      background: var(--panel-soft);
+    }
+    .metric strong {
+      display: block;
+      font-size: 16px;
+      margin-bottom: 3px;
+    }
+    .metric span {
+      font-size: 11px;
+      color: var(--muted);
+    }
+    .timeline {
+      min-height: 0;
+      overflow: auto;
+      padding: 14px;
+    }
+    .phase {
+      margin-bottom: 14px;
+    }
+    .phase-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 760;
+      margin-bottom: 8px;
+    }
+    .tool-row {
+      position: relative;
+      display: grid;
+      grid-template-columns: 24px 1fr auto;
+      gap: 8px;
+      align-items: start;
+      padding: 8px 0;
+      font-size: 12px;
+    }
+    .tool-row::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 29px;
+      bottom: -8px;
+      width: 1px;
+      background: var(--line);
+    }
+    .phase .tool-row:last-child::before { display: none; }
+    .tool-dot {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      background: var(--green-soft);
+      color: var(--green);
+      font-weight: 800;
+      font-size: 11px;
+    }
+    .tool-dot.blue { background: var(--blue-soft); color: var(--blue); }
+    .tool-dot.orange { background: var(--orange-soft); color: var(--orange); }
+    .tool-dot.red { background: var(--red-soft); color: var(--red); }
+    .tool-main strong {
+      display: block;
+      font-size: 12px;
+      margin-bottom: 3px;
+    }
+    .tool-main span {
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .tool-time {
+      color: var(--muted-2);
+      font-variant-numeric: tabular-nums;
+    }
 
-    /* Drawer Tabs: 配置 + 运行 */
-    .drawer-tabs { display: flex; border-bottom: 1px solid #e8e8e8; }
-    .drawer-tab { flex: 1; text-align: center; padding: 12px; cursor: pointer; font-size: 14px; color: #999; border-bottom: 2px solid transparent; }
-    .drawer-tab.active { color: #1890ff; border-bottom-color: #1890ff; }
-    .drawer-content { flex: 1; overflow-y: auto; }
-    .drawer-panel { display: none; flex-direction: column; }
-    .drawer-panel.active { display: flex; }
+    .diff-pane {
+      border-top: 1px solid var(--line);
+      background: #fff;
+      padding: 12px 14px;
+    }
+    .diff-grid {
+      display: grid;
+      grid-template-columns: 132px 1fr;
+      gap: 10px;
+      height: 190px;
+      min-height: 0;
+    }
+    .file-list {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: hidden;
+      background: var(--panel-soft);
+    }
+    .file-item {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      border-bottom: 1px solid var(--line);
+      font-size: 11px;
+      color: #334155;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .file-item.active { background: var(--blue-soft); color: var(--blue); }
+    .file-item:last-child { border-bottom: 0; }
+    .diff-code {
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      overflow: auto;
+      background: #0f172a;
+      color: #dbe4ef;
+      font-family: "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      line-height: 1.5;
+      padding: 8px 0;
+    }
+    .code-line {
+      display: grid;
+      grid-template-columns: 34px 1fr;
+      gap: 8px;
+      padding: 0 10px;
+    }
+    .code-line.add { background: rgba(34, 197, 94, 0.16); color: #bbf7d0; }
+    .code-line.del { background: rgba(248, 113, 113, 0.14); color: #fecaca; }
+    .code-line .ln { color: #64748b; text-align: right; user-select: none; }
+    .approval-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .approval-note {
+      font-size: 12px;
+      color: var(--muted);
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .approval-actions {
+      display: flex;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
 
-    /* Config Tab */
-    .config-body { padding: 20px; }
-    .config-section { margin-bottom: 20px; }
-    .config-section-title { font-size: 13px; font-weight: 600; color: #333; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #f0f0f0; }
-    .config-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; font-size: 13px; }
-    .config-label { color: #999; }
-    .config-value { color: #333; }
-    .config-input { width: 200px; padding: 4px 8px; border: 1px solid #d9d9d9; border-radius: 4px; font-size: 12px; outline: none; }
-    .config-input:focus { border-color: #1890ff; }
-
-    /* Prompt Layers */
-    .prompt-layers { border: 1px solid #e8e8e8; border-radius: 6px; overflow: hidden; }
-    .prompt-layer { border-bottom: 1px solid #e8e8e8; }
-    .prompt-layer:last-child { border-bottom: none; }
-    .prompt-layer.selected { background: #f0f7ff; border-left: 3px solid #1890ff; }
-    .prompt-layer-header { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; cursor: pointer; }
-    .prompt-layer-header:hover { background: rgba(24,144,255,0.04); }
-    .prompt-layer-radio { display: flex; align-items: center; gap: 8px; }
-    .prompt-layer-title { font-size: 12px; font-weight: 500; display: flex; align-items: center; gap: 6px; }
-    .prompt-layer-body { padding: 8px 12px 12px; font-size: 12px; line-height: 1.6; background: #f6f8fa; }
-
-    /* Advanced Settings (Collapse) */
-    .advanced-toggle { padding: 10px 0; cursor: pointer; font-size: 13px; color: #666; display: flex; align-items: center; gap: 6px; }
-    .advanced-toggle:hover { color: #1890ff; }
-    .advanced-body { display: none; padding: 12px 0; }
-    .advanced-body.open { display: block; }
-
-    /* Git Config Section */
-    .git-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
-    .git-section-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 10px; }
-    .git-save-btn { padding: 4px 16px; background: #1890ff; color: #fff; border: none; border-radius: 4px; font-size: 12px; cursor: pointer; }
-    .git-save-btn:hover { background: #40a9ff; }
-
-    /* Knowledge Base Selector */
-    .kb-selector { margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0; }
-    .kb-selector-title { font-size: 12px; font-weight: 600; color: #666; margin-bottom: 10px; }
-    .kb-tag { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #f0f7ff; border: 1px solid #91d5ff; border-radius: 4px; font-size: 12px; color: #1890ff; margin: 0 6px 6px 0; }
-    .kb-tag .remove { cursor: pointer; color: #999; font-size: 14px; }
-    .kb-tag .remove:hover { color: #ff4d4f; }
-
-    /* ===== Chat Tab ===== */
-    .chat-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 16px; }
-    .chat-message { display: flex; gap: 12px; }
-    .chat-message.user { flex-direction: row-reverse; }
-    .chat-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #fff; flex-shrink: 0; }
-    .chat-avatar.ai { background: #1890ff; }
-    .chat-avatar.user { background: #52c41a; }
-    .chat-bubble { max-width: 75%; padding: 12px 16px; border-radius: 12px; font-size: 13px; line-height: 1.6; }
-    .chat-message.ai .chat-bubble { background: #f6f8fa; border-top-left-radius: 4px; }
-    .chat-message.user .chat-bubble { background: #e6f7ff; border-top-right-radius: 4px; }
-    .chat-bubble code { background: #e8e8e8; padding: 1px 4px; border-radius: 3px; font-size: 12px; font-family: 'SF Mono', Menlo, monospace; }
-    .chat-bubble pre { background: #1e1e1e; color: #d4d4d4; padding: 10px 12px; border-radius: 6px; font-size: 12px; margin: 8px 0; overflow-x: auto; font-family: 'SF Mono', Menlo, monospace; }
-    .chat-footer { padding: 12px 20px; border-top: 1px solid #e8e8e8; display: flex; gap: 8px; flex-shrink: 0; }
-    .chat-input { flex: 1; padding: 10px 14px; border: 1px solid #d9d9d9; border-radius: 8px; outline: none; font-size: 13px; font-family: inherit; resize: none; min-height: 42px; max-height: 120px; }
-    .chat-input:focus { border-color: #1890ff; box-shadow: 0 0 0 2px rgba(24,144,255,0.1); }
-    .chat-send { padding: 10px 20px; background: #1890ff; color: #fff; border: none; border-radius: 8px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
-    .chat-send:hover { background: #40a9ff; }
-    .chat-clear { padding: 10px 12px; background: #fff; color: #999; border: 1px solid #d9d9d9; border-radius: 8px; font-size: 13px; cursor: pointer; flex-shrink: 0; }
-    .chat-clear:hover { color: #ff4d4f; border-color: #ff4d4f; }
-    .chat-typing { display: flex; align-items: center; gap: 8px; padding: 8px 16px; color: #999; font-size: 12px; }
-    .typing-dots span { display: inline-block; width: 6px; height: 6px; background: #999; border-radius: 50%; animation: typing 1.4s infinite; margin: 0 2px; }
-    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-    @keyframes typing { 0%,60%,100% { transform: translateY(0); } 30% { transform: translateY(-4px); } }
-
-    /* ===== Run Tab ===== */
-    .run-body { display: flex; flex-direction: column; height: calc(100vh - 120px); }
-
-    /* Timeline */
-    .run-timeline { flex: 1; overflow-y: auto; padding: 16px 20px; }
-    .timeline-item { display: flex; gap: 12px; padding: 8px 0; position: relative; }
-    .timeline-item:not(:last-child)::before { content: ''; position: absolute; left: 11px; top: 32px; bottom: -8px; width: 1px; background: #e8e8e8; }
-    .timeline-dot { width: 22px; height: 22px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: 14px; }
-    .timeline-dot.success { color: #52c41a; } .timeline-dot.fail { color: #ff4d4f; } .timeline-dot.thinking { color: #1890ff; }
-    .timeline-content { flex: 1; min-width: 0; }
-    .timeline-header { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; padding: 2px 8px; border-radius: 4px; }
-    .timeline-header:hover { background: #f5f5f5; }
-    .timeline-tool { font-weight: 500; }
-    .timeline-args { color: #888; font-size: 12px; }
-    .timeline-result { margin: 6px 0 0; padding: 10px 12px; background: #1e1e1e; color: #d4d4d4; border-radius: 6px; font-size: 12px; line-height: 1.5; max-height: 200px; overflow: auto; white-space: pre-wrap; font-family: 'SF Mono', Menlo, monospace; }
-    .thinking-text { color: #888; font-size: 13px; animation: pulse 1.5s ease-in-out infinite; }
-    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.5; } }
-
-    /* Final Reply */
-    .final-reply { background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 6px; padding: 12px 16px; font-size: 13px; line-height: 1.6; }
-
-    /* PRD Review Report */
-    .review-report { background: #fff; border: 1px solid #e8e8e8; border-radius: 8px; margin-top: 12px; }
-    .review-report-header { padding: 12px 16px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
-    .review-verdict { font-size: 14px; font-weight: 600; }
-    .review-verdict.pass { color: #52c41a; } .review-verdict.fail { color: #ff4d4f; } .review-verdict.conditional { color: #fa8c16; }
-    .review-section { padding: 12px 16px; border-bottom: 1px solid #f5f5f5; }
-    .review-section:last-child { border-bottom: none; }
-    .review-section-name { font-size: 13px; font-weight: 500; margin-bottom: 4px; display: flex; justify-content: space-between; }
-    .review-score { font-size: 12px; }
-    .review-score.high { color: #52c41a; } .review-score.mid { color: #fa8c16; } .review-score.low { color: #ff4d4f; }
-    .review-comment { font-size: 12px; color: #666; line-height: 1.5; }
-
-    /* Diff Section */
-    .diff-section { border-top: 1px solid #e8e8e8; margin: 12px 20px 0; padding-top: 12px; }
-    .diff-header { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
-    .diff-layout { display: flex; gap: 12px; max-height: 300px; }
-    .diff-file-list { width: 200px; flex-shrink: 0; overflow-y: auto; border: 1px solid #e8e8e8; border-radius: 6px; }
-    .diff-file-item { display: flex; align-items: center; gap: 6px; padding: 6px 10px; font-size: 12px; cursor: pointer; border-bottom: 1px solid #f5f5f5; }
-    .diff-file-item:hover { background: #f5f5f5; }
-    .diff-file-item.active { background: #e6f7ff; }
-    .diff-file-badge { width: 18px; height: 18px; border-radius: 3px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
-    .diff-file-badge.added { background: #f6ffed; color: #52c41a; }
-    .diff-file-badge.modified { background: #fff7e6; color: #fa8c16; }
-    .diff-content { flex: 1; overflow: auto; border: 1px solid #e8e8e8; border-radius: 6px; font-family: 'SF Mono', Menlo, monospace; font-size: 12px; }
-    .diff-line { display: flex; padding: 1px 8px; }
-    .diff-line.add { background: #f6ffed; color: #52c41a; }
-    .diff-line.del { background: #fff1f0; color: #ff4d4f; }
-    .diff-line-num { color: #999; width: 40px; text-align: right; padding-right: 8px; flex-shrink: 0; user-select: none; }
-
-    /* Git PR Link */
-    .git-pr-link { display: flex; align-items: center; gap: 6px; padding: 10px 12px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 6px; font-size: 12px; margin: 12px 20px 0; }
-    .git-pr-link a { color: #1890ff; word-break: break-all; }
-
-    /* Run Actions */
-    .run-actions { display: flex; gap: 8px; padding: 16px 20px; border-top: 1px solid #e8e8e8; flex-shrink: 0; }
-    .run-actions .btn { flex: 1; text-align: center; }
-
-    /* ===== Page 5: Knowledge Base ===== */
-    .kb-page { padding: 24px; }
-    .kb-page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .kb-page-header h2 { font-size: 22px; }
-    .kb-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
-    .kb-card { background: #fff; border-radius: 8px; padding: 20px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; transition: box-shadow 0.2s; }
-    .kb-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12); }
-    .kb-card h3 { font-size: 16px; margin-bottom: 8px; }
-    .kb-card .desc { font-size: 13px; color: #666; margin-bottom: 12px; }
-    .kb-card .meta { display: flex; gap: 16px; font-size: 12px; color: #999; }
-
-    /* Knowledge Base Detail */
-    .kb-detail { padding: 24px; }
-    .kb-detail-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    .kb-detail-header h2 { font-size: 22px; display: flex; align-items: center; gap: 12px; }
-    .kb-actions { display: flex; gap: 8px; }
-    .doc-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
-    .doc-table th { text-align: left; padding: 12px 16px; background: #fafafa; font-size: 13px; color: #666; border-bottom: 1px solid #f0f0f0; }
-    .doc-table td { padding: 12px 16px; font-size: 13px; border-bottom: 1px solid #f0f0f0; }
-    .doc-table tr:last-child td { border-bottom: none; }
-    .doc-table tr:hover td { background: #fafafa; }
-    .doc-status { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 4px; }
-    .doc-status.completed { background: #f6ffed; color: #52c41a; }
-    .doc-status.processing { background: #e6f7ff; color: #1890ff; }
-    .doc-status.failed { background: #fff1f0; color: #ff4d4f; }
-
-    /* Upload Modal */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 400; justify-content: center; align-items: center; }
-    .modal-overlay.open { display: flex; }
-    .modal { background: #fff; border-radius: 12px; width: 500px; max-height: 80vh; overflow-y: auto; }
-    .modal-header { padding: 20px 24px; border-bottom: 1px solid #e8e8e8; display: flex; justify-content: space-between; align-items: center; }
-    .modal-header h3 { font-size: 16px; margin: 0; }
-    .modal-body { padding: 24px; }
-    .modal-footer { padding: 16px 24px; border-top: 1px solid #e8e8e8; display: flex; justify-content: flex-end; gap: 8px; }
-
-    /* Upload Area */
-    .upload-area { border: 2px dashed #d9d9d9; border-radius: 8px; padding: 40px; text-align: center; cursor: pointer; transition: all 0.2s; }
-    .upload-area:hover { border-color: #1890ff; background: #f0f7ff; }
-    .upload-icon { font-size: 48px; color: #d9d9d9; margin-bottom: 12px; }
-    .upload-text { font-size: 14px; color: #666; }
-    .upload-hint { font-size: 12px; color: #999; margin-top: 8px; }
-
-    /* ===== Page 6: Settings ===== */
-    .settings-page { display: flex; min-height: calc(100vh - 48px); }
-    .settings-sidebar { width: 220px; background: #fff; padding: 16px 0; border-right: 1px solid #e8e8e8; }
-    .settings-sidebar a { display: block; padding: 10px 24px; color: #333; text-decoration: none; font-size: 14px; cursor: pointer; }
-    .settings-sidebar a:hover, .settings-sidebar a.active { background: #e6f7ff; color: #1890ff; }
-    .settings-content { flex: 1; padding: 24px; }
-    .settings-content h3 { font-size: 18px; margin-bottom: 20px; }
-    .provider-card { background: #fff; border-radius: 8px; padding: 20px; margin-bottom: 16px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); display: flex; justify-content: space-between; align-items: center; }
-    .provider-info { display: flex; align-items: center; gap: 16px; }
-    .provider-icon { width: 40px; height: 40px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: bold; color: #fff; }
-    .provider-icon.openai { background: #10a37f; }
-    .provider-icon.custom { background: #6366f1; }
-
-    /* ===== Error Pages ===== */
-    .error-page { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: calc(100vh - 48px); }
-    .error-code { font-size: 120px; font-weight: bold; color: #d9d9d9; }
-    .error-title { font-size: 24px; color: #333; margin: 16px 0 8px; }
-    .error-desc { font-size: 14px; color: #999; margin-bottom: 24px; }
+    @media (max-width: 1180px) {
+      .workspace {
+        grid-template-columns: 220px minmax(420px, 1fr);
+      }
+      .right-panel {
+        display: none;
+      }
+    }
+    @media (max-width: 760px) {
+      .app { grid-template-columns: 1fr; }
+      .rail { display: none; }
+      .workspace {
+        grid-template-columns: 1fr;
+        overflow: auto;
+      }
+      .left-panel { display: none; }
+      .canvas-panel { min-height: 820px; }
+      .top-title span { display: none; }
+      .top-actions .btn:not(.primary) { display: none; }
+    }
   </style>
 </head>
 <body>
+  <div class="app">
+    <aside class="rail" aria-label="主导航">
+      <div class="brand">AI</div>
+      <button class="rail-btn active" title="工作流">W</button>
+      <button class="rail-btn" title="知识库">K</button>
+      <button class="rail-btn" title="执行记录">L</button>
+      <button class="rail-btn" title="设置">S</button>
+      <div class="rail-spacer"></div>
+      <div class="avatar">SX</div>
+    </aside>
 
-<!-- ===== Nav ===== -->
-<nav class="nav">
-  <div class="nav-left">
-    <span class="title">AI Dev Workflow</span>
-    <a onclick="showPage('dashboard')" id="nav-dashboard">工作台</a>
-    <a onclick="showPage('pipeline')" id="nav-pipeline">流水线</a>
-    <a onclick="showPage('knowledge')" id="nav-knowledge">知识库</a>
-    <a onclick="showPage('settings')" id="nav-settings">系统设置</a>
-  </div>
-  <div class="nav-right">
-    <div class="nav-avatar">J</div>
-    <span class="nav-username">Jack</span>
-  </div>
-</nav>
+    <main class="main">
+      <header class="topbar">
+        <div class="top-title">
+          <h1>AI Dev Workflow</h1>
+          <span>payment-service / 需求到 PR 的 AI 交付流水线</span>
+        </div>
+        <div class="top-actions">
+          <button class="btn">保存</button>
+          <button class="btn">执行历史</button>
+          <button class="btn primary">运行工作流</button>
+        </div>
+      </header>
 
-<!-- ==================== Page 1: 登录 ==================== -->
-<div class="page active" id="page-login">
-  <div class="login-page">
-    <div class="login-card">
-      <h1>AI Dev Workflow</h1>
-      <p class="subtitle">AI 驱动的软件开发工作流编排平台</p>
-      <div class="tabs">
-        <div class="tab-item active">登录</div>
-        <div class="tab-item">注册</div>
-      </div>
-      <div class="form-group"><label>邮箱 / 用户名</label><input placeholder="请输入邮箱或用户名" /></div>
-      <div class="form-group"><label>密码</label><input type="password" placeholder="请输入密码" /></div>
-      <button class="btn btn-primary" style="width:100%;padding:12px;" onclick="showPage('dashboard')">登 录</button>
-    </div>
-  </div>
-  <div class="page-label">第 1 页 / 共 9 页：登录与注册</div>
-</div>
-
-<!-- ==================== Page 2: 工作台 ==================== -->
-<div class="page" id="page-dashboard">
-  <div class="dashboard">
-    <div class="dashboard-header">
-      <h2>工作台</h2>
-      <button class="btn btn-primary">+ 新建项目</button>
-    </div>
-    <div class="stats">
-      <div class="stat-card"><div class="number">3</div><div class="label">项目总数</div></div>
-      <div class="stat-card"><div class="number">7</div><div class="label">工作流总数</div></div>
-      <div class="stat-card"><div class="number">23</div><div class="label">本周执行次数</div></div>
-      <div class="stat-card"><div class="number">2</div><div class="label">知识库数量</div></div>
-    </div>
-    <div class="project-list">
-      <div class="project-card" onclick="showPage('project-detail')">
-        <h3>电商平台重构</h3>
-        <p class="desc">基于微服务架构的电商平台重构项目</p>
-        <div class="meta"><span class="tag tag-blue">进行中</span><span>3 个工作流</span></div>
-      </div>
-      <div class="project-card" onclick="showPage('project-detail')">
-        <h3>内部管理系统</h3>
-        <p class="desc">公司内部 OA 系统开发</p>
-        <div class="meta"><span class="tag tag-green">已完成</span><span>2 个工作流</span></div>
-      </div>
-      <div class="project-card">
-        <h3>移动端 App</h3>
-        <p class="desc">React Native 跨平台移动应用</p>
-        <div class="meta"><span class="tag tag-orange">规划中</span><span>0 个工作流</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="page-label">第 2 页 / 共 9 页：工作台</div>
-</div>
-
-<!-- ==================== Page 3: 项目详情 ==================== -->
-<div class="page" id="page-project-detail">
-  <div class="project-detail">
-    <div class="project-detail-header">
-      <h2>
-        <a style="color:#1890ff;cursor:pointer;font-size:14px;" onclick="showPage('dashboard')">← 返回</a>
-        电商平台重构
-      </h2>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-ghost" onclick="showPage('knowledge-detail')">知识库管理</button>
-        <button class="btn btn-primary">+ 新建工作流</button>
-      </div>
-    </div>
-    <div class="detail-tabs">
-      <div class="detail-tab active">工作流</div>
-      <div class="detail-tab">知识库</div>
-      <div class="detail-tab">设置</div>
-    </div>
-    <div class="workflow-list">
-      <div class="workflow-card" onclick="showPage('pipeline')">
-        <div class="workflow-card-left">
-          <div class="workflow-card-icon">📋</div>
-          <div>
-            <div class="workflow-card-title">用户收藏夹功能</div>
-            <div class="workflow-card-desc">需求分析 → PRD审核 → 代码开发 → 代码Review</div>
+      <section class="workspace">
+        <aside class="panel left-panel">
+          <div class="panel-head">
+            <div>
+              <div class="panel-title">项目状态</div>
+              <div class="panel-sub">今日 23:42 更新</div>
+            </div>
+            <span class="chip green"><span class="dot"></span>可执行</span>
           </div>
-        </div>
-        <span class="tag tag-blue">进行中</span>
-      </div>
-      <div class="workflow-card" onclick="showPage('pipeline')">
-        <div class="workflow-card-left">
-          <div class="workflow-card-icon">🛒</div>
-          <div>
-            <div class="workflow-card-title">购物车模块</div>
-            <div class="workflow-card-desc">需求分析 → 技术方案 → 代码开发</div>
-          </div>
-        </div>
-        <span class="tag tag-green">已完成</span>
-      </div>
-    </div>
-  </div>
-  <div class="page-label">第 3 页 / 共 9 页：项目详情</div>
-</div>
 
-<!-- ==================== Page 4: 流水线画布 ==================== -->
-<div class="page" id="page-pipeline">
-  <div class="pipeline-page">
-    <!-- 左侧节点面板 -->
-    <div class="node-panel">
-      <div class="node-panel-header">节点库</div>
-      <div class="node-panel-list">
-        <div class="node-panel-group">
-          <div class="node-panel-group-title">需求阶段</div>
-          <div class="node-item"><div class="node-icon blue">📋</div>PRD审核</div>
-          <div class="node-item"><div class="node-icon green">✅</div>需求评审</div>
-        </div>
-        <div class="node-panel-group">
-          <div class="node-panel-group-title">开发阶段</div>
-          <div class="node-item"><div class="node-icon orange">💻</div>代码开发</div>
-          <div class="node-item"><div class="node-icon purple">🔍</div>代码Review</div>
-          <div class="node-item"><div class="node-icon cyan">🧪</div>代码自测</div>
-        </div>
-        <div class="node-panel-group">
-          <div class="node-panel-group-title">发布阶段</div>
-          <div class="node-item"><div class="node-icon red">🚀</div>代码上线</div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 右侧画布 -->
-    <div class="canvas-area">
-      <div class="canvas-toolbar">
-        <div class="canvas-toolbar-left">
-          <a style="color:#1890ff;cursor:pointer;font-size:14px;" onclick="showPage('project-detail')">← 返回</a>
-          <h3>用户收藏夹功能</h3>
-        </div>
-        <div class="canvas-toolbar-right">
-          <button class="btn btn-ghost" style="padding:6px 14px;font-size:13px;">保存</button>
-          <button class="btn btn-ghost" style="padding:6px 14px;font-size:13px;">缩放适配</button>
-          <button class="btn btn-primary" style="padding:6px 14px;font-size:13px;">运行工作流</button>
-        </div>
-      </div>
-      <div class="canvas-body">
-        <div class="canvas-grid"></div>
-        <svg class="canvas-connections" width="100%" height="100%">
-          <line x1="260" y1="80" x2="360" y2="80" /><line x1="540" y1="80" x2="640" y2="80" /><line x1="820" y1="80" x2="920" y2="80" />
-        </svg>
-        <div class="canvas-nodes">
-          <div class="canvas-node approved" style="left:80px;top:50px;" onclick="openDrawer('prd')">
-            <div class="canvas-node-header"><div class="node-icon blue" style="width:20px;height:20px;font-size:10px;">📋</div><span class="canvas-node-title">PRD审核</span></div>
-            <div class="canvas-node-body"><span class="canvas-node-status approved">已通过</span><div class="canvas-node-meta">RAG 增强审核</div></div>
+          <div class="project-health">
+            <div class="health-row"><span>知识库</span><strong>3 个 / 128 切片</strong></div>
+            <div class="health-row"><span>Git 仓库</span><strong>已关联 main</strong></div>
+            <div class="health-row"><span>待审批</span><strong>1 个节点</strong></div>
+            <div class="health-row"><span>最近验证</span><strong>构建通过</strong></div>
           </div>
-          <div class="canvas-node waiting" style="left:360px;top:50px;" onclick="openDrawer('code')">
-            <div class="canvas-node-header"><div class="node-icon orange" style="width:20px;height:20px;font-size:10px;">💻</div><span class="canvas-node-title">代码开发</span></div>
-            <div class="canvas-node-body"><span class="canvas-node-status waiting">待审批</span><div class="canvas-node-meta">Agent Loop · 15轮</div></div>
-          </div>
-          <div class="canvas-node" style="left:640px;top:50px;">
-            <div class="canvas-node-header"><div class="node-icon purple" style="width:20px;height:20px;font-size:10px;">🔍</div><span class="canvas-node-title">代码Review</span></div>
-            <div class="canvas-node-body"><span class="canvas-node-status pending">待开始</span></div>
-          </div>
-          <div class="canvas-node" style="left:920px;top:50px;">
-            <div class="canvas-node-header"><div class="node-icon red" style="width:20px;height:20px;font-size:10px;">🚀</div><span class="canvas-node-title">代码上线</span></div>
-            <div class="canvas-node-body"><span class="canvas-node-status pending">待开始</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
 
-  <!-- ===== Drawer Overlay ===== -->
-  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+          <div class="node-library">
+            <div class="group-label">需求阶段</div>
+            <div class="node-palette-item"><span class="node-mark m-blue">P</span>PRD 审核</div>
+            <div class="node-palette-item"><span class="node-mark m-blue">A</span>技术方案</div>
 
-  <!-- ===== Node Drawer ===== -->
-  <div class="node-drawer" id="node-drawer">
-    <div class="drawer-header">
-      <h3><div class="node-icon orange" style="width:24px;height:24px;font-size:12px;">💻</div> 代码开发 <span class="tag tag-orange">待审批</span></h3>
-      <div class="drawer-close" onclick="closeDrawer()">✕</div>
-    </div>
-    <div class="drawer-tabs">
-      <div class="drawer-tab active" onclick="switchDrawerTab(0)">配置</div>
-      <div class="drawer-tab" onclick="switchDrawerTab(1)">对话</div>
-      <div class="drawer-tab" onclick="switchDrawerTab(2)">运行</div>
-    </div>
-    <div class="drawer-content">
-      <!-- ===== Config Tab ===== -->
-      <div class="drawer-panel active" id="drawer-panel-config">
-        <div class="config-body">
-          <div class="annotation"><strong>配置 Tab：</strong>Prompt 编辑 + 高级设置（Git + 知识库选择）。对应后端 updateNodeConfig 接口。</div>
+            <div class="group-label">开发阶段</div>
+            <div class="node-palette-item"><span class="node-mark m-green">C</span>代码开发</div>
+            <div class="node-palette-item"><span class="node-mark m-green">T</span>代码自测</div>
+            <div class="node-palette-item"><span class="node-mark m-violet">R</span>代码 Review</div>
 
-          <!-- Prompt 模板 -->
-          <div class="config-section">
-            <div class="config-section-title">Prompt 模板</div>
-            <div class="prompt-layers">
-              <div class="prompt-layer selected">
-                <div class="prompt-layer-header">
-                  <div class="prompt-layer-radio"><input type="radio" name="layer" checked /><div class="prompt-layer-title">Layer 3：节点级自定义 <span class="tag tag-blue">当前使用</span></div></div>
-                  <span style="font-size:11px;color:#1890ff;cursor:pointer;">编辑</span>
+            <div class="group-label">发布阶段</div>
+            <div class="node-palette-item"><span class="node-mark m-orange">Q</span>项目提测</div>
+            <div class="node-palette-item"><span class="node-mark m-red">D</span>代码上线</div>
+          </div>
+
+          <div class="knowledge-strip">
+            <div class="section-title">关联知识库 <span class="panel-sub">TopK 8</span></div>
+            <div class="kb-mini">
+              <div class="kb-mini-title"><span>PRD 审核标准</span><span class="chip green">可用</span></div>
+              <div class="kb-mini-meta"><span>42 切片</span><span>Recall@5 0.82</span></div>
+            </div>
+            <div class="kb-mini">
+              <div class="kb-mini-title"><span>后端接口规范</span><span class="chip green">可用</span></div>
+              <div class="kb-mini-meta"><span>56 切片</span><span>平均 214ms</span></div>
+            </div>
+          </div>
+        </aside>
+
+        <section class="panel canvas-panel">
+          <div class="workflow-toolbar">
+            <div class="status-cluster">
+              <strong style="font-size:13px;">默认开发工作流</strong>
+              <span class="chip green"><span class="dot"></span>3 已通过</span>
+              <span class="chip blue"><span class="dot"></span>1 执行中</span>
+              <span class="chip orange"><span class="dot"></span>1 待审批</span>
+            </div>
+            <div class="top-actions">
+              <button class="btn icon-btn" title="撤销">↶</button>
+              <button class="btn icon-btn" title="重做">↷</button>
+              <button class="btn">适配</button>
+            </div>
+          </div>
+
+          <div class="canvas">
+            <div class="flow">
+              <div class="edge e1 active"></div>
+              <div class="edge e2 active"></div>
+              <div class="edge e3"></div>
+              <div class="edge e4 active"></div>
+              <div class="edge e5"></div>
+
+              <article class="flow-node approved n1">
+                <div class="node-top"><span class="node-mark m-blue">P</span><span class="node-title">PRD 审核</span></div>
+                <div class="node-body">
+                  <span class="chip green">已通过</span>
+                  <div class="node-meta"><span>RAG 命中 6</span><span>8.4s</span></div>
+                  <div class="node-progress"><span style="width:100%"></span></div>
                 </div>
-                <div class="prompt-layer-body">你是一个高级全栈开发工程师。请根据上一阶段输出的需求文档，直接编写代码实现...</div>
-              </div>
-              <div class="prompt-layer">
-                <div class="prompt-layer-header">
-                  <div class="prompt-layer-radio"><input type="radio" name="layer" /><div class="prompt-layer-title" style="color:#999;">Layer 2：项目级模板</div></div>
+              </article>
+
+              <article class="flow-node approved n2">
+                <div class="node-top"><span class="node-mark m-blue">A</span><span class="node-title">技术方案</span></div>
+                <div class="node-body">
+                  <span class="chip green">已通过</span>
+                  <div class="node-meta"><span>接口 5 个</span><span>11.2s</span></div>
+                  <div class="node-progress"><span style="width:100%"></span></div>
                 </div>
-              </div>
-              <div class="prompt-layer">
-                <div class="prompt-layer-header">
-                  <div class="prompt-layer-radio"><input type="radio" name="layer" /><div class="prompt-layer-title" style="color:#999;">Layer 1：系统内置默认</div></div>
+              </article>
+
+              <article class="flow-node running selected n3">
+                <div class="node-top"><span class="node-mark m-green">C</span><span class="node-title">代码开发</span></div>
+                <div class="node-body">
+                  <span class="chip blue">Agent 执行中</span>
+                  <div class="node-meta"><span>工具调用 17</span><span>2m 14s</span></div>
+                  <div class="node-progress blue"><span style="width:72%"></span></div>
                 </div>
-              </div>
-            </div>
-          </div>
+              </article>
 
-          <!-- 高级设置 -->
-          <div class="advanced-toggle" onclick="this.nextElementSibling.classList.toggle('open')">▶ 高级设置</div>
-          <div class="advanced-body">
-            <div class="config-row"><span class="config-label">AI 模型</span><span class="config-value">gpt-5.4-mini</span></div>
-            <div class="config-row"><span class="config-label">超时设置</span><span class="config-value">15分钟</span></div>
-            <div class="config-row"><span class="config-label">输入来源</span><span class="config-value">上游节点</span></div>
-            <div class="config-row"><span class="config-label">需要审批</span><span class="config-value"><input type="checkbox" checked /></span></div>
-
-            <!-- Git 配置 -->
-            <div class="git-section">
-              <div class="git-section-title">Git 集成</div>
-              <div class="config-row"><span class="config-label">Git 仓库</span><input class="config-input" value="https://github.com/user/repo.git" /></div>
-              <div class="config-row"><span class="config-label">Git 平台</span><select class="config-input"><option>GitHub</option><option>GitLab</option></select></div>
-              <div class="config-row"><span class="config-label">Git Token</span><input class="config-input" type="password" value="ghp_xxxxx" /></div>
-              <div class="config-row"><span class="config-label">基准分支</span><input class="config-input" value="main" /></div>
-              <div style="text-align:right;margin-top:8px;"><button class="git-save-btn">保存 Git 配置</button></div>
-            </div>
-
-            <!-- 知识库选择（PRD审核节点显示） -->
-            <div class="kb-selector">
-              <div class="kb-selector-title">关联知识库（PRD审核 / 代码Review 节点可用）</div>
-              <div>
-                <span class="kb-tag">PRD审核标准 (12条) <span class="remove">×</span></span>
-                <span class="kb-tag">代码规范 (8条) <span class="remove">×</span></span>
-              </div>
-              <button class="btn btn-ghost" style="padding:4px 12px;font-size:12px;margin-top:8px;">+ 添加知识库</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ===== Chat Tab ===== -->
-      <div class="drawer-panel" id="drawer-panel-chat">
-        <div class="annotation" style="margin:16px 20px 0;"><strong>对话 Tab：</strong>用户和 AI 实时对话，逐步完善节点产出。每个节点都有独立的对话历史（SSE 流式输出）。对应后端 AiService.chat() + ChatMessage entity。</div>
-
-        <div class="chat-body" style="flex:1;">
-          <!-- AI 初始消息 -->
-          <div class="chat-message ai">
-            <div class="chat-avatar ai">AI</div>
-            <div class="chat-bubble">
-              你好！我是代码开发助手。根据上一阶段的 PRD 审核结果，我已经生成了初版代码。你可以告诉我需要修改的地方，我会逐步完善。<br/><br/>
-              当前已创建的文件：<br/>
-              • <code>src/favorites.ts</code> — 收藏夹 Controller<br/>
-              • <code>src/routes/favorites.routes.ts</code> — 路由<br/>
-              • <code>src/models/favorite.model.ts</code> — 数据模型
-            </div>
-          </div>
-
-          <!-- 用户消息 -->
-          <div class="chat-message user">
-            <div class="chat-avatar user">J</div>
-            <div class="chat-bubble">收藏列表接口需要支持分页，每页 20 条，按收藏时间倒序排列</div>
-          </div>
-
-          <!-- AI 回复（带代码） -->
-          <div class="chat-message ai">
-            <div class="chat-avatar ai">AI</div>
-            <div class="chat-bubble">
-              好的，我来修改 <code>src/favorites.ts</code> 中的 list 方法，增加分页支持：
-              <pre>// GET /api/favorites?page=1&amp;size=20
-async list(req: Request, res: Response) {
-  const page = Number(req.query.page) || 1;
-  const size = Number(req.query.size) || 20;
-  const skip = (page - 1) * size;
-
-  const [items, total] = await favoriteRepo
-    .findAndCount({
-      where: { userId: req.user.id },
-      order: { createdAt: 'DESC' },
-      skip,
-      take: size,
-    });
-
-  res.json({ items, total, page, size });
-}</pre>
-              已更新文件。还需要修改其他地方吗？
-            </div>
-          </div>
-
-          <!-- 用户消息 -->
-          <div class="chat-message user">
-            <div class="chat-avatar user">J</div>
-            <div class="chat-bubble">再加一个检查：同一篇文章不能重复收藏，重复收藏返回已收藏的记录而不是报错</div>
-          </div>
-
-          <!-- AI 正在输入 -->
-          <div class="chat-typing">
-            <div class="chat-avatar ai" style="width:24px;height:24px;font-size:10px;">AI</div>
-            <div class="typing-dots"><span></span><span></span><span></span></div>
-            AI 正在回复...
-          </div>
-        </div>
-
-        <!-- 底部输入框 -->
-        <div class="chat-footer">
-          <button class="chat-clear" title="清空对话">🗑</button>
-          <textarea class="chat-input" placeholder="输入消息，Shift+Enter 换行..." rows="1"></textarea>
-          <button class="chat-send">发送</button>
-        </div>
-      </div>
-
-      <!-- ===== Run Tab ===== -->
-      <div class="drawer-panel" id="drawer-panel-run">
-        <div class="run-body">
-          <div class="annotation" style="margin:16px 20px;"><strong>运行 Tab：</strong>Cursor 风格时间线 + Diff 审批 + Git PR + PRD审核报告。覆盖代码开发节点和 PRD审核节点的执行展示。</div>
-
-          <div class="run-timeline">
-            <!-- Thinking -->
-            <div class="timeline-item">
-              <div class="timeline-dot thinking">⏳</div>
-              <div class="timeline-content"><span class="thinking-text">AI 正在思考（第 1 轮）...</span></div>
-            </div>
-            <!-- Tool Call: list_directory -->
-            <div class="timeline-item">
-              <div class="timeline-dot success">✅</div>
-              <div class="timeline-content">
-                <div class="timeline-header">📁 <span class="timeline-tool">列出目录</span> <span class="timeline-args">.</span></div>
-              </div>
-            </div>
-            <!-- Tool Call: read_file -->
-            <div class="timeline-item">
-              <div class="timeline-dot success">✅</div>
-              <div class="timeline-content">
-                <div class="timeline-header">📄 <span class="timeline-tool">读取文件</span> <span class="timeline-args">src/app.ts</span></div>
-                <pre class="timeline-result">[文件共 42 行，当前显示第 1-42 行]
-   1 | import express from 'express';
-   2 | const app = express();
-   ...</pre>
-              </div>
-            </div>
-            <!-- Tool Call: write_file -->
-            <div class="timeline-item">
-              <div class="timeline-dot success">✅</div>
-              <div class="timeline-content">
-                <div class="timeline-header">✏️ <span class="timeline-tool">写入文件</span> <span class="timeline-args">src/favorites.ts</span></div>
-                <pre class="timeline-result">已创建文件 src/favorites.ts（58 行）</pre>
-              </div>
-            </div>
-            <!-- Done -->
-            <div class="timeline-item">
-              <div class="timeline-dot success">✅</div>
-              <div class="timeline-content">
-                <div class="final-reply">
-                  <strong>任务完成</strong><br/>
-                  已创建以下文件：<br/>
-                  • src/favorites.ts — 收藏夹 Controller<br/>
-                  • src/routes/favorites.routes.ts — 路由<br/>
-                  • src/models/favorite.model.ts — 数据模型
+              <article class="flow-node waiting n4">
+                <div class="node-top"><span class="node-mark m-green">T</span><span class="node-title">代码自测</span></div>
+                <div class="node-body">
+                  <span class="chip orange">等待输入</span>
+                  <div class="node-meta"><span>build / test</span><span>未开始</span></div>
+                  <div class="node-progress orange"><span style="width:18%"></span></div>
                 </div>
-              </div>
-            </div>
+              </article>
 
-            <!-- PRD Review Report (PRD审核节点展示) -->
-            <div class="review-report" style="margin:12px 0;">
-              <div class="review-report-header">
-                <span style="font-size:13px;font-weight:600;">📋 PRD 审核报告</span>
-                <span class="review-verdict conditional">有条件通过</span>
-              </div>
-              <div class="review-section">
-                <div class="review-section-name">1. 文档完整性 <span class="review-score high">8/10</span></div>
-                <div class="review-comment">包含功能概述、接口设计、数据模型。缺少非功能需求和边界条件覆盖。</div>
-              </div>
-              <div class="review-section">
-                <div class="review-section-name">2. 技术可行性 <span class="review-score high">9/10</span></div>
-                <div class="review-comment">接口设计合理，数据模型清晰。JWT 鉴权方案可行。</div>
-              </div>
-              <div class="review-section">
-                <div class="review-section-name">3. 边界条件 <span class="review-score low">4/10</span></div>
-                <div class="review-comment">未覆盖：并发收藏冲突、收藏数量上限、数据迁移方案。建议补充。</div>
-              </div>
-              <div class="review-section">
-                <div class="review-section-name" style="color:#666;font-size:12px;">📚 引用来源：PRD审核标准 · 参考资料 1（相似度 72%）</div>
-              </div>
-            </div>
-          </div>
+              <article class="flow-node approved n5">
+                <div class="node-top"><span class="node-mark m-violet">K</span><span class="node-title">知识检索</span></div>
+                <div class="node-body">
+                  <span class="chip green">已完成</span>
+                  <div class="node-meta"><span>TopK 8</span><span>223ms</span></div>
+                  <div class="node-progress"><span style="width:100%"></span></div>
+                </div>
+              </article>
 
-          <!-- Diff Section -->
-          <div class="diff-section">
-            <div class="diff-header">文件变更（3 个文件）</div>
-            <div class="diff-layout">
-              <div class="diff-file-list">
-                <div class="diff-file-item active"><span class="diff-file-badge added">+</span> src/favorites.ts</div>
-                <div class="diff-file-item"><span class="diff-file-badge added">+</span> src/routes/favorites.routes.ts</div>
-                <div class="diff-file-item"><span class="diff-file-badge modified">~</span> src/app.ts</div>
-              </div>
-              <div class="diff-content">
-                <div class="diff-line add"><span class="diff-line-num">1</span>+ import { Router } from 'express';</div>
-                <div class="diff-line add"><span class="diff-line-num">2</span>+ import { FavoritesController } from '../favorites';</div>
-                <div class="diff-line add"><span class="diff-line-num">3</span>+ </div>
-                <div class="diff-line add"><span class="diff-line-num">4</span>+ const router = Router();</div>
-                <div class="diff-line add"><span class="diff-line-num">5</span>+ router.post('/', FavoritesController.add);</div>
-                <div class="diff-line add"><span class="diff-line-num">6</span>+ router.delete('/:id', FavoritesController.remove);</div>
-                <div class="diff-line add"><span class="diff-line-num">7</span>+ router.get('/', FavoritesController.list);</div>
-              </div>
+              <article class="flow-node waiting n6">
+                <div class="node-top"><span class="node-mark m-violet">R</span><span class="node-title">代码 Review</span></div>
+                <div class="node-body">
+                  <span class="chip orange">待审批</span>
+                  <div class="node-meta"><span>Diff 4 文件</span><span>验证通过</span></div>
+                  <div class="node-progress orange"><span style="width:60%"></span></div>
+                </div>
+              </article>
+
+              <article class="flow-node n7">
+                <div class="node-top"><span class="node-mark m-red">PR</span><span class="node-title">创建 PR</span></div>
+                <div class="node-body">
+                  <span class="chip">未开始</span>
+                  <div class="node-meta"><span>GitHub</span><span>feature/ai</span></div>
+                  <div class="node-progress"><span style="width:0%"></span></div>
+                </div>
+              </article>
             </div>
           </div>
 
-          <!-- Git PR Link -->
-          <div class="git-pr-link">
-            ✅ <span>PR 已创建：</span> <a href="#">https://github.com/user/repo/pull/42</a>
+          <div class="bottom-console">
+            <div class="console-section">
+              <div class="section-title">RAG 命中上下文 <span class="chip blue">6 / 8</span></div>
+              <div class="rag-hit">
+                <div class="rag-hit-head"><span>PRD 审核标准.md</span><strong>0.86</strong></div>
+                <p>涉及支付状态流转时，必须明确幂等键、回调重试、异常补偿和用户可见状态。</p>
+              </div>
+              <div class="rag-hit">
+                <div class="rag-hit-head"><span>后端接口规范.md</span><strong>0.79</strong></div>
+                <p>新增接口必须包含鉴权策略、错误码、分页约定和审计字段。</p>
+              </div>
+            </div>
+            <div class="console-section">
+              <div class="section-title">自动验证 <span class="chip green">通过</span></div>
+              <div class="verify-list">
+                <div class="verify-row"><span>typecheck</span><div class="verify-bar"><span style="width:100%"></span></div><strong>12.4s</strong></div>
+                <div class="verify-row"><span>unit test</span><div class="verify-bar"><span style="width:100%"></span></div><strong>31/31</strong></div>
+                <div class="verify-row"><span>lint</span><div class="verify-bar"><span style="width:100%"></span></div><strong>0 error</strong></div>
+                <div class="verify-row"><span>diff risk</span><div class="verify-bar"><span style="width:66%; background: var(--orange);"></span></div><strong>中</strong></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="panel right-panel">
+          <div class="tabs">
+            <button class="tab active">概览</button>
+            <button class="tab">Prompt</button>
+            <button class="tab">执行</button>
+            <button class="tab">Diff</button>
           </div>
 
-          <!-- Actions -->
-          <div class="run-actions">
-            <button class="btn btn-ghost">执行节点</button>
-            <button class="btn btn-primary">通过</button>
-            <button class="btn btn-danger">驳回</button>
+          <div class="node-summary">
+            <div class="summary-title">
+              <h2>代码开发</h2>
+              <span class="chip blue"><span class="dot"></span>Agent 执行中</span>
+            </div>
+            <div class="metrics">
+              <div class="metric"><strong>17</strong><span>工具调用</span></div>
+              <div class="metric"><strong>4</strong><span>变更文件</span></div>
+              <div class="metric"><strong>2</strong><span>自愈轮次</span></div>
+            </div>
           </div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="page-label">第 4 页 / 共 9 页：流水线画布 + 节点抽屉</div>
-</div>
 
-<!-- ==================== Page 5: 知识库列表 ==================== -->
-<div class="page" id="page-knowledge">
-  <div class="kb-page">
-    <div class="kb-page-header">
-      <h2>知识库管理</h2>
-      <button class="btn btn-primary">+ 新建知识库</button>
-    </div>
-    <div class="annotation"><strong>知识库页面：</strong>对应后端 KnowledgeModule。支持创建知识库、上传文档（PDF/Word/MD）、手动录入知识条目。文档上传后自动切片 → Embedding → 存入 Milvus 向量数据库。</div>
-    <div class="kb-list">
-      <div class="kb-card" onclick="showPage('knowledge-detail')">
-        <h3>PRD审核标准</h3>
-        <p class="desc">PRD 文档的审核规范、模板要求、评审标准</p>
-        <div class="meta"><span>12 个文档</span><span>156 个切片</span><span class="tag tag-green">可用</span></div>
-      </div>
-      <div class="kb-card" onclick="showPage('knowledge-detail')">
-        <h3>代码规范</h3>
-        <p class="desc">TypeScript 编码规范、命名约定、架构规范</p>
-        <div class="meta"><span>8 个文档</span><span>93 个切片</span><span class="tag tag-green">可用</span></div>
-      </div>
-      <div class="kb-card">
-        <h3>技术方案模板</h3>
-        <p class="desc">技术方案文档的标准模板和评审要点</p>
-        <div class="meta"><span>3 个文档</span><span>42 个切片</span><span class="tag tag-blue">索引中</span></div>
-      </div>
-    </div>
-  </div>
-  <div class="page-label">第 5 页 / 共 9 页：知识库列表</div>
-</div>
+          <div class="timeline">
+            <div class="phase">
+              <div class="phase-head"><span>阶段 1：理解上下文</span><span class="chip green">完成</span></div>
+              <div class="tool-row">
+                <span class="tool-dot">✓</span>
+                <div class="tool-main"><strong>retrieve_context</strong><span>从 2 个知识库检索接口规范和 PRD 审核标准。</span></div>
+                <span class="tool-time">0.22s</span>
+              </div>
+              <div class="tool-row">
+                <span class="tool-dot">✓</span>
+                <div class="tool-main"><strong>list_directory</strong><span>扫描 src/modules 与 api 目录，定位支付模块。</span></div>
+                <span class="tool-time">0.04s</span>
+              </div>
+            </div>
 
-<!-- ==================== Page 6: 知识库详情 ==================== -->
-<div class="page" id="page-knowledge-detail">
-  <div class="kb-detail">
-    <div class="kb-detail-header">
-      <h2>
-        <a style="color:#1890ff;cursor:pointer;font-size:14px;" onclick="showPage('knowledge')">← 返回</a>
-        PRD审核标准
-      </h2>
-      <div class="kb-actions">
-        <button class="btn btn-ghost" onclick="document.getElementById('upload-modal').classList.add('open')">📎 上传文档</button>
-        <button class="btn btn-ghost" onclick="document.getElementById('entry-modal').classList.add('open')">✏️ 手动录入</button>
-        <button class="btn btn-danger">删除知识库</button>
-      </div>
-    </div>
-    <div class="annotation"><strong>知识库详情：</strong>管理文档列表。上传文件后后端自动 解析 → 切片(512 token + 200 overlap) → Embedding → 存入 Milvus。手动录入直接输入文本。</div>
-    <table class="doc-table">
-      <thead>
-        <tr><th>文件名</th><th>类型</th><th>切片数</th><th>状态</th><th>上传时间</th><th>操作</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>PRD审核规范.pdf</td><td><span class="tag tag-blue">PDF</span></td><td>24</td>
-          <td><span class="doc-status completed">● 已完成</span></td><td>2026-05-12</td>
-          <td><a style="color:#ff4d4f;cursor:pointer;font-size:12px;">删除</a></td>
-        </tr>
-        <tr>
-          <td>文档完整性检查清单.md</td><td><span class="tag tag-green">Markdown</span></td><td>8</td>
-          <td><span class="doc-status completed">● 已完成</span></td><td>2026-05-12</td>
-          <td><a style="color:#ff4d4f;cursor:pointer;font-size:12px;">删除</a></td>
-        </tr>
-        <tr>
-          <td>技术可行性评估标准.docx</td><td><span class="tag tag-orange">Word</span></td><td>—</td>
-          <td><span class="doc-status processing">● 处理中</span></td><td>2026-05-13</td>
-          <td><a style="color:#999;font-size:12px;">处理中...</a></td>
-        </tr>
-        <tr>
-          <td>接口设计规范</td><td><span class="tag" style="background:#f5f5f5;color:#666;">手动录入</span></td><td>3</td>
-          <td><span class="doc-status completed">● 已完成</span></td><td>2026-05-13</td>
-          <td><a style="color:#ff4d4f;cursor:pointer;font-size:12px;">删除</a></td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
+            <div class="phase">
+              <div class="phase-head"><span>阶段 2：修改代码</span><span class="chip blue">进行中</span></div>
+              <div class="tool-row">
+                <span class="tool-dot blue">•</span>
+                <div class="tool-main"><strong>read_file</strong><span>读取 payment.service.ts 第 80-180 行。</span></div>
+                <span class="tool-time">0.03s</span>
+              </div>
+              <div class="tool-row">
+                <span class="tool-dot blue">•</span>
+                <div class="tool-main"><strong>write_file</strong><span>新增 refund.dto.ts，并更新 controller 参数校验。</span></div>
+                <span class="tool-time">0.09s</span>
+              </div>
+            </div>
 
-  <!-- Upload Modal -->
-  <div class="modal-overlay" id="upload-modal">
-    <div class="modal">
-      <div class="modal-header"><h3>上传文档</h3><span style="cursor:pointer;font-size:20px;color:#999;" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</span></div>
-      <div class="modal-body">
-        <div class="upload-area">
-          <div class="upload-icon">📄</div>
-          <div class="upload-text">点击或拖拽文件到此处</div>
-          <div class="upload-hint">支持 PDF / Word(.docx) / Markdown(.md) / TXT，单文件最大 10MB</div>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">取消</button>
-        <button class="btn btn-primary">开始上传</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Manual Entry Modal -->
-  <div class="modal-overlay" id="entry-modal">
-    <div class="modal">
-      <div class="modal-header"><h3>手动录入</h3><span style="cursor:pointer;font-size:20px;color:#999;" onclick="this.closest('.modal-overlay').classList.remove('open')">✕</span></div>
-      <div class="modal-body">
-        <div class="form-group"><label>标题</label><input placeholder="知识条目标题" /></div>
-        <div class="form-group"><label>内容</label><textarea rows="10" placeholder="输入知识内容..."></textarea></div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="this.closest('.modal-overlay').classList.remove('open')">取消</button>
-        <button class="btn btn-primary">提交</button>
-      </div>
-    </div>
-  </div>
-  <div class="page-label">第 6 页 / 共 9 页：知识库详情（文档管理 + 上传 + 手动录入）</div>
-</div>
-
-<!-- ==================== Page 7: 系统设置 ==================== -->
-<div class="page" id="page-settings">
-  <div class="settings-page">
-    <div class="settings-sidebar">
-      <a class="active">AI 模型配置</a>
-      <a>向量数据库</a>
-      <a>Git 全局配置</a>
-      <a>用户管理</a>
-    </div>
-    <div class="settings-content">
-      <h3>AI 模型配置</h3>
-      <div class="annotation"><strong>系统设置：</strong>AI 模型（Chat + Embedding）和向量数据库的全局配置。对应后端 .env 中的环境变量。</div>
-
-      <div class="provider-card">
-        <div class="provider-info">
-          <div class="provider-icon custom">AI</div>
-          <div>
-            <div style="font-size:15px;font-weight:500;">Chat 模型</div>
-            <div style="font-size:12px;color:#999;">gpt-5.4-mini · 中转站</div>
+            <div class="phase">
+              <div class="phase-head"><span>阶段 3：验证与自愈</span><span class="chip orange">修复后通过</span></div>
+              <div class="tool-row">
+                <span class="tool-dot orange">!</span>
+                <div class="tool-main"><strong>run_command</strong><span>pnpm build 首次失败，缺少 RefundStatus 导出。</span></div>
+                <span class="tool-time">8.8s</span>
+              </div>
+              <div class="tool-row">
+                <span class="tool-dot">✓</span>
+                <div class="tool-main"><strong>run_command</strong><span>pnpm test 通过，31 个用例全部成功。</span></div>
+                <span class="tool-time">14.6s</span>
+              </div>
+            </div>
           </div>
-        </div>
-        <span class="tag tag-green">已连接</span>
-      </div>
 
-      <div class="provider-card">
-        <div class="provider-info">
-          <div class="provider-icon openai">E</div>
-          <div>
-            <div style="font-size:15px;font-weight:500;">Embedding 模型</div>
-            <div style="font-size:12px;color:#999;">text-embedding-v3 · 阿里云百炼</div>
+          <div class="diff-pane">
+            <div class="section-title">Diff 审批 <span class="chip orange">等待人工确认</span></div>
+            <div class="diff-grid">
+              <div class="file-list">
+                <div class="file-item active"><span class="chip green">+</span> refund.dto.ts</div>
+                <div class="file-item"><span class="chip orange">~</span> payment.service.ts</div>
+                <div class="file-item"><span class="chip orange">~</span> payment.controller.ts</div>
+                <div class="file-item"><span class="chip green">+</span> refund.spec.ts</div>
+              </div>
+              <div class="diff-code">
+                <div class="code-line"><span class="ln">1</span><span>import { IsEnum, IsString } from 'class-validator';</span></div>
+                <div class="code-line add"><span class="ln">2</span><span>export enum RefundReason { USER_REQUEST = 'user_request' }</span></div>
+                <div class="code-line add"><span class="ln">3</span><span>export class CreateRefundDto {</span></div>
+                <div class="code-line add"><span class="ln">4</span><span>  @IsString() paymentId: string;</span></div>
+                <div class="code-line add"><span class="ln">5</span><span>  @IsEnum(RefundReason) reason: RefundReason;</span></div>
+                <div class="code-line add"><span class="ln">6</span><span>}</span></div>
+              </div>
+            </div>
+            <div class="approval-bar">
+              <div class="approval-note">审批通过后将推送 feature/agent-refund 并创建 Pull Request。</div>
+              <div class="approval-actions">
+                <button class="btn danger">驳回</button>
+                <button class="btn primary">通过并创建 PR</button>
+              </div>
+            </div>
           </div>
-        </div>
-        <span class="tag tag-green">已连接</span>
-      </div>
-
-      <div class="provider-card">
-        <div class="provider-info">
-          <div class="provider-icon" style="background:#6366f1;">M</div>
-          <div>
-            <div style="font-size:15px;font-weight:500;">Milvus 向量数据库</div>
-            <div style="font-size:12px;color:#999;">Zilliz Cloud · Serverless</div>
-          </div>
-        </div>
-        <span class="tag tag-green">已连接</span>
-      </div>
-
-      <h3 style="margin-top:32px;">Git 全局配置</h3>
-      <div style="background:#fff;border-radius:8px;padding:20px;box-shadow:0 1px 4px rgba(0,0,0,0.08);">
-        <div class="form-group"><label>默认 Git 平台</label><select><option>GitHub</option><option>GitLab</option></select></div>
-        <div class="form-group"><label>默认基准分支</label><input value="main" /></div>
-      </div>
-    </div>
+        </aside>
+      </section>
+    </main>
   </div>
-  <div class="page-label">第 7 页 / 共 9 页：系统设置</div>
-</div>
-
-<!-- ==================== Page 8: 404 ==================== -->
-<div class="page" id="page-404">
-  <div class="error-page">
-    <div class="error-code">404</div>
-    <div class="error-title">页面未找到</div>
-    <div class="error-desc">您访问的页面不存在或已被移除</div>
-    <button class="btn btn-primary" onclick="showPage('dashboard')">返回工作台</button>
-  </div>
-  <div class="page-label">第 8 页 / 共 9 页：404</div>
-</div>
-
-<!-- ==================== Page 9: 403 ==================== -->
-<div class="page" id="page-403">
-  <div class="error-page">
-    <div class="error-code">403</div>
-    <div class="error-title">权限不足</div>
-    <div class="error-desc">您没有权限访问此页面，请联系管理员</div>
-    <button class="btn btn-primary" onclick="showPage('dashboard')">返回工作台</button>
-  </div>
-  <div class="page-label">第 9 页 / 共 9 页：403</div>
-</div>
-
-<script>
-  // Page navigation
-  function showPage(name) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.querySelectorAll('.nav a').forEach(a => a.classList.remove('active'));
-    const page = document.getElementById('page-' + name);
-    if (page) page.classList.add('active');
-    const nav = document.getElementById('nav-' + name);
-    if (nav) nav.classList.add('active');
-    // Hide nav on login
-    document.querySelector('.nav').style.display = name === 'login' ? 'none' : 'flex';
-  }
-
-  // Drawer
-  function openDrawer(type) {
-    document.getElementById('drawer-overlay').classList.add('open');
-    document.getElementById('node-drawer').classList.add('open');
-  }
-  function closeDrawer() {
-    document.getElementById('drawer-overlay').classList.remove('open');
-    document.getElementById('node-drawer').classList.remove('open');
-  }
-
-  // Drawer tab switch
-  function switchDrawerTab(index) {
-    document.querySelectorAll('.drawer-tab').forEach((t, i) => {
-      t.classList.toggle('active', i === index);
-    });
-    document.querySelectorAll('.drawer-panel').forEach((p, i) => {
-      p.classList.toggle('active', i === index);
-    });
-  }
-
-  // Init: show login
-  showPage('login');
-</script>
 </body>
 </html>

@@ -1,17 +1,20 @@
 /* 节点卡片 */
 .stage-node {
   position: relative;
-  width: 180px;
+  width: 210px;
   background: #fff;
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
   border-left: 4px solid #d9d9d9;
   cursor: pointer;
-  transition: box-shadow 0.2s;
+  transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
 }
 
 .stage-node:hover {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+  box-shadow: 0 16px 34px rgba(15, 23, 42, 0.12);
+  border-color: #cbd5e1;
 }
 
 /* 删除按钮 */
@@ -54,41 +57,50 @@
 
 /* 头部 */
 .stage-node-header {
-  padding: 10px 12px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 12px 14px;
+  border-bottom: 1px solid #f1f5f9;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
 .stage-node-icon {
-  width: 20px;
-  height: 20px;
+  width: 26px;
+  height: 26px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 12px;
+  font-weight: 700;
   color: #fff;
   flex-shrink: 0;
 }
 
 .stage-node-title {
-  font-size: 13px;
-  font-weight: 500;
-  color: #333;
+  font-size: 14px;
+  font-weight: 700;
+  color: #111827;
 }
 
 /* 内容 */
 .stage-node-body {
-  padding: 10px 12px;
+  padding: 12px 14px 14px;
+}
+
+.stage-node-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
 }
 
 .stage-node-status {
   font-size: 12px;
-  padding: 2px 8px;
+  padding: 3px 8px;
   border-radius: 4px;
   display: inline-block;
+  line-height: 18px;
 }
 
 .stage-node-status.pending { background: #fafafa; color: #999; }
@@ -98,10 +110,39 @@
 .stage-node-status.rejected { background: #fff1f0; color: #ff4d4f; }
 
 .stage-node-meta {
-  font-size: 11px;
-  color: #999;
-  margin-top: 6px;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 10px;
+  line-height: 1.45;
 }
+
+.stage-node-chip {
+  font-size: 11px;
+  line-height: 18px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.stage-node-chip.rag {
+  color: #1d4ed8;
+  background: #eff6ff;
+}
+
+.stage-node-chip.diff {
+  color: #15803d;
+  background: #f0fdf4;
+}
+
+.stage-node-verification {
+  margin-top: 8px;
+  font-size: 11px;
+  color: #64748b;
+}
+
+.stage-node-verification.running { color: #1890ff; }
+.stage-node-verification.passed { color: #52c41a; }
+.stage-node-verification.failed { color: #ff4d4f; }
 
 /* 审批区域 */
 .stage-node-approval {

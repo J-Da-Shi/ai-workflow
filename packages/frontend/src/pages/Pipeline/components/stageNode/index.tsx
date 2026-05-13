@@ -16,6 +16,13 @@ const STATUS_LABEL: Record<string, string> = {
   failed: '执行失败',
 };
 
+const VERIFICATION_LABEL: Record<string, string> = {
+  pending: '待验证',
+  running: '验证中',
+  passed: '验证通过',
+  failed: '验证失败',
+};
+
 const COLOR_MAP: Record<string, string> = {
   blue: '#1890ff',
   green: '#52c41a',
@@ -97,10 +104,21 @@ export function StageNode({ id, data }: NodeProps<StageNode>) {
         <span className="stage-node-title">{data.name}</span>
       </div>
       <div className="stage-node-body">
-        <span className={`stage-node-status ${data.status}`}>
-          {STATUS_LABEL[data.status]}
-        </span>
+        <div className="stage-node-badges">
+          <span className={`stage-node-status ${data.status}`}>
+            {STATUS_LABEL[data.status]}
+          </span>
+          {data.ragEnabled && <span className="stage-node-chip rag">RAG</span>}
+          {typeof data.diffCount === 'number' && (
+            <span className="stage-node-chip diff">Diff {data.diffCount}</span>
+          )}
+        </div>
         {data.meta && <div className="stage-node-meta">{data.meta}</div>}
+        {data.verification && (
+          <div className={`stage-node-verification ${data.verification}`}>
+            {VERIFICATION_LABEL[data.verification]}
+          </div>
+        )}
       </div>
       {/* waiting 状态：显示摘要 + 审批按钮 */}
       {data.status === 'waiting' && (

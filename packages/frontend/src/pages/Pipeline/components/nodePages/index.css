@@ -1,18 +1,87 @@
 .pipeline-page {
   width: 100%;
-  height: calc(100vh - 100px);
+  height: 100%;
+  min-height: calc(100vh - 48px);
+  background: #f8fafc;
 }
 
 .pipeline-header {
-  padding: 10px;
-  border-bottom: 1px solid #e8e8e8;
+  min-height: 82px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
   display: flex;
-  flex-direction: row;
+  align-items: center;
   justify-content: space-between;
+  gap: 16px;
+  background: #fff;
+}
+
+.pipeline-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.pipeline-title .ant-btn {
+  padding-left: 0;
+  flex-shrink: 0;
+}
+
+.pipeline-title h2 {
+  margin: 0;
+  color: #111827;
+  font-size: 18px;
+  line-height: 26px;
+  letter-spacing: 0;
+}
+
+.pipeline-title p {
+  margin: 3px 0 0;
+  color: #64748b;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .btn .ant-btn {
-  margin-left: 10px;
+  margin-left: 8px;
+}
+
+.pipeline-page .react-flow {
+  height: calc(100% - 82px);
+  min-height: 520px;
+}
+
+.pipeline-page .react-flow__pane {
+  cursor: default;
+}
+
+.pipeline-page .react-flow__controls {
+  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pipeline-page .react-flow__attribution {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .pipeline-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .btn {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .btn .ant-btn {
+    margin-left: 0;
+  }
 }
 
 /* 边虚线流动动画 */

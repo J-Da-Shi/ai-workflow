@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Button, Spin, Empty, message, Modal, Input } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import {
   getKnowledgeBases,
   createKnowledgeBase,
@@ -34,7 +34,6 @@ interface KBDocument {
 }
 
 export default function KnowledgePage() {
-  const navigate = useNavigate();
   const { projectId } = useParams<{ projectId: string }>();
 
   // 状态

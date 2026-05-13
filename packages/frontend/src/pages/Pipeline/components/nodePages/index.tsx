@@ -15,13 +15,99 @@ import { Button, message } from 'antd';
 import type { StageNodeData, NodeExecution } from '../../types';
 import { stageNode } from './../stageNode/nodeTypes';
 import { stageEdge } from '../stageEdge/edgeTypes';
-import { getCanvas, updateCanvas, createNodeConfig, executeWorkflow, getExecutions } from '../../../../api/workflow';
+import {
+  getCanvas,
+  updateCanvas,
+  createNodeConfig,
+  updateNodeConfig,
+  executeWorkflow,
+  getExecutions,
+} from '../../../../api/workflow';
 import './index.css';
 import NodeDrawer from '../nodeDrawer';
 
 interface NodePagesProps {
   workflowId: string;
 }
+
+const CORE_NODE_KEYS = ['1', '2', '3'];
+
+const CORE_NODE_DEFINITIONS = [
+  {
+    id: 'prd-review',
+    key: '1',
+    name: 'PRD审核',
+    backendType: 'PRD审核',
+    icon: 'P',
+    color: 'blue' as const,
+    position: { x: 80, y: 150 },
+    meta: 'RAG 增强审核',
+    requireApproval: false,
+  },
+  {
+    id: 'requirement-analysis',
+    key: '2',
+    name: '需求分析',
+    backendType: '需求评审',
+    icon: 'A',
+    color: 'cyan' as const,
+    position: { x: 350, y: 150 },
+    meta: '输出技术方案',
+    requireApproval: false,
+  },
+  {
+    id: 'code-development',
+    key: '3',
+    name: '代码开发',
+    backendType: '代码开发',
+    icon: 'C',
+    color: 'green' as const,
+    position: { x: 620, y: 150 },
+    meta: 'Agent 写代码 + Diff',
+    requireApproval: true,
+  },
+];
+
+const CORE_EDGES: Edge[] = [
+  {
+    id: 'edge-prd-analysis',
+    source: 'prd-review',
+    target: 'requirement-analysis',
+    type: 'stage',
+  },
+  {
+    id: 'edge-analysis-code',
+    source: 'requirement-analysis',
+    target: 'code-development',
+    type: 'stage',
+  },
+];
+
+const createCoreNodes = (workflowId: string): Node[] =>
+  CORE_NODE_DEFINITIONS.map((item) => ({
+    id: item.id,
+    type: 'stage',
+    position: item.position,
+    data: {
+      name: item.name,
+      key: item.key,
+      icon: item.icon,
+      color: item.color,
+      status: 'pending',
+      workflowId,
+      meta: item.meta,
+      backendType: item.backendType,
+      ragEnabled: item.key === '1',
+      verification: item.key === '3' ? 'pending' : undefined,
+      diffCount: item.key === '3' ? 0 : undefined,
+    } satisfies StageNodeData,
+  }));
+
+const isCoreCanvas = (nodes: Node[]) => {
+  if (nodes.length !== CORE_NODE_DEFINITIONS.length) return false;
+  const keys = nodes.map((n) => (n.data as StageNodeData).key).sort();
+  return keys.every((key, index) => key === CORE_NODE_KEYS[index]);
+};
 
 export default function NodePages({ workflowId }: NodePagesProps) {
   // ─── 画布状态 ───
@@ -44,8 +130,33 @@ export default function NodePages({ workflowId }: NodePagesProps) {
         edges: Edge[];
       };
       if (res) {
+        const shouldSeedCoreCanvas = !isCoreCanvas(res.nodes || []);
+        const canvasNodes = shouldSeedCoreCanvas ? createCoreNodes(workflowId) : res.nodes || [];
+        const canvasEdges = shouldSeedCoreCanvas ? CORE_EDGES : res.edges || [];
+
+        if (shouldSeedCoreCanvas) {
+          await Promise.all(
+            CORE_NODE_DEFINITIONS.map(async (item) => {
+              try {
+                await createNodeConfig(workflowId, {
+                  nodeKey: item.key,
+                  nodeType: item.backendType,
+                  aiModel: 'GPT-4o',
+                  inputSource: item.key === '1' ? '用户 PRD / 节点 Prompt' : '上一节点输出',
+                });
+              } catch {
+                // 节点配置可能已存在，继续用 update 保证闭环配置正确。
+              }
+              await updateNodeConfig(workflowId, item.key, {
+                requireApproval: item.requireApproval,
+              });
+            }),
+          );
+          await updateCanvas(workflowId, { nodes: canvasNodes, edges: canvasEdges });
+        }
+
         // 给每个节点补上 workflowId，供 StageNode 审批按钮使用
-        const loadedNodes = (res.nodes || []).map((n: Node) => ({
+        const loadedNodes = canvasNodes.map((n: Node) => ({
           ...n,
           data: { ...n.data, workflowId },
         }));
@@ -65,7 +176,7 @@ export default function NodePages({ workflowId }: NodePagesProps) {
         } catch { /* 首次加载可能没有执行记录 */ }
 
         setNodes(loadedNodes);
-        setEdges(res.edges || []);
+        setEdges(canvasEdges);
       }
     };
     loadCanvas();
@@ -115,9 +226,23 @@ export default function NodePages({ workflowId }: NodePagesProps) {
       const raw = e.dataTransfer.getData('application/reactflow');
       if (!raw) return;
 
-      const { name, icon, color, key } = JSON.parse(raw);
+      const { name, icon, color, key, backendType } = JSON.parse(raw);
+      if (!CORE_NODE_KEYS.includes(key)) return;
+      if (nodes.some((node) => (node.data as StageNodeData).key === key)) {
+        message.warning('闭环中该节点已存在');
+        return;
+      }
       const position = screenToFlowPosition({ x: e.clientX, y: e.clientY });
-      const data: StageNodeData = { name, key, icon, color, status: 'pending', workflowId };
+      const data: StageNodeData = {
+        name,
+        key,
+        icon,
+        color,
+        status: 'pending',
+        workflowId,
+        backendType: backendType || name,
+        meta: key === '1' ? 'RAG 增强审核' : key === '2' ? '输出技术方案' : 'Agent 写代码 + Diff',
+      };
 
       const newNode: Node = {
         id: `node_${Date.now()}`,
@@ -131,11 +256,21 @@ export default function NodePages({ workflowId }: NodePagesProps) {
       // 在后端创建默认节点配置
       createNodeConfig(workflowId, {
         nodeKey: key,
-        nodeType: name,
+        nodeType: backendType || name,
         aiModel: 'GPT-4o',
-      });
+      })
+        .then(() =>
+          updateNodeConfig(workflowId, key, {
+            requireApproval: key === '3',
+          }),
+        )
+        .catch(() => {
+          updateNodeConfig(workflowId, key, {
+            requireApproval: key === '3',
+          });
+        });
     },
-    [screenToFlowPosition, setNodes, workflowId],
+    [nodes, screenToFlowPosition, setNodes, workflowId],
   );
 
   // ─── ReactFlow 核心事件回调（标准模式） ───
@@ -305,11 +440,11 @@ export default function NodePages({ workflowId }: NodePagesProps) {
 
   /** 运行工作流 */
   const run = useCallback(async () => {
-    message.info('工作流开始运行');
+    message.info('开始执行三节点闭环');
     startPolling();
     try {
       await executeWorkflow(workflowId);
-      message.success('工作流执行完成');
+      message.success('闭环已推进，代码开发节点等待审批');
     } catch {
       message.error('工作流执行失败');
     } finally {
@@ -329,15 +464,19 @@ export default function NodePages({ workflowId }: NodePagesProps) {
   return (
     <div className="pipeline-page">
       <div className="pipeline-header">
-        <div className="back">
+        <div className="pipeline-title">
           <Button type="link" onClick={() => navigate('/')}>← 返回</Button>
+          <div>
+            <h2>PRD 到代码开发闭环</h2>
+            <p>PRD 审核 → 需求分析 → 代码开发，前两步自动推进，代码开发后进入 Diff 审批。</p>
+          </div>
         </div>
         <div className="btn">
           <Button onClick={saveCanvas}>保存</Button>
           <Button onClick={scaling}>缩放适配</Button>
           <Button disabled={historyIndex <= 0} onClick={cancel}>撤销</Button>
           <Button disabled={historyIndex >= history.length - 1} onClick={recover}>恢复</Button>
-          <Button type="primary" onClick={run}>运行工作流</Button>
+          <Button type="primary" onClick={run}>运行闭环</Button>
         </div>
       </div>
       <ReactFlow

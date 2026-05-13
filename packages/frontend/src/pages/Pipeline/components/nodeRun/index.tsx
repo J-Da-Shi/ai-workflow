@@ -8,6 +8,7 @@ import {
   SearchOutlined,
   EditOutlined,
   LoadingOutlined,
+  PlayCircleOutlined,
 } from '@ant-design/icons';
 import ReactMarkdown from 'react-markdown';
 import ReactDiffViewer from 'react-diff-viewer-continued';
@@ -20,6 +21,7 @@ const TOOL_META: Record<string, { label: string; icon: React.ReactNode }> = {
   read_file: { label: '读取文件', icon: <FileTextOutlined /> },
   search_code: { label: '搜索代码', icon: <SearchOutlined /> },
   write_file: { label: '写入文件', icon: <EditOutlined /> },
+  run_command: { label: '执行验证', icon: <PlayCircleOutlined /> },
 };
 
 interface NodeRunProps {
@@ -337,6 +339,8 @@ function formatArgs(toolName: string, args: Record<string, any>): string {
       return `"${args.pattern || ''}"`;
     case 'write_file':
       return args.path || '';
+    case 'run_command':
+      return args.command || '';
     default:
       return JSON.stringify(args).slice(0, 50);
   }
