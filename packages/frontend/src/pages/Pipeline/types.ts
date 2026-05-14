@@ -48,6 +48,7 @@ export interface NodeConfig {
   gitPlatform?: string;
   gitToken?: string;
   gitBaseBranch?: string;
+  engine?: string;
 }
 
 // 节点执行记录

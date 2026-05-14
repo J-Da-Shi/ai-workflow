@@ -241,6 +241,21 @@ export default function ConfigTab({ config, workflowId, nodeKey }: ConfigTabProp
                     />
                   </span>
                 </div>
+                <div className="config-row">
+                  <span className="config-label">执行引擎</span>
+                  <span className="config-value">
+                    <select
+                      className="config-input"
+                      defaultValue={config.engine || 'agent'}
+                      onChange={(e) => {
+                        updateNodeConfig(workflowId, nodeKey, { engine: e.target.value });
+                      }}
+                    >
+                      <option value="agent">自研 Agent Loop</option>
+                      <option value="codex">Codex CLI</option>
+                    </select>
+                  </span>
+                </div>
                 <div className="git-section">
                   <div className="git-section-title">Git 集成</div>
                   <div className="config-row">

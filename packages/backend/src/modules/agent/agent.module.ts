@@ -5,6 +5,7 @@ import { AiModule } from '../ai/ai.module';
 import { WorkflowModule } from '../workflow/workflow.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AgentLogEntity } from './entities/agent-log.entity';
+import { CodexService } from './codex.service';
 
 @Module({
   imports: [
@@ -13,7 +14,7 @@ import { AgentLogEntity } from './entities/agent-log.entity';
     WorkflowModule,
   ],
   controllers: [AgentController],
-  providers: [AgentService],
-  exports: [AgentService],
+  providers: [AgentService, CodexService],
+  exports: [AgentService, CodexService],
 })
 export class AgentModule {}

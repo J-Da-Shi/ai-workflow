@@ -16,6 +16,10 @@ export class UpdateNodeConfigDto {
   @IsOptional()
   inputSource?: string;
 
+  @IsString()
+  @IsOptional()
+  engine?: string;
+
   @IsObject()
   @IsOptional()
   promptLayers?: {

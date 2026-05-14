@@ -249,6 +249,12 @@ export class WorkflowService {
       throw new NotFoundException('节点配置不存在');
     }
 
+    // Token 脱敏：前端需要看到完整 token
+    // 只展示前 4 位 + 星号，让用户知道“已配置”但看不到明文
+    // if (node.gitToken) {
+    //   node.gitToken = node.gitToken.slice(0, 4) + '****';
+    // }
+
     return node;
   }
 

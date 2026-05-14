@@ -45,6 +45,10 @@ export class WorkflowNode {
 
   @Column()
   aiModel: string;
+  // 执行引擎：'agent'（自研 Agent Loop）| 'codex'（Codex CLI）
+  // 默认 'agent'，用户可在节点配置中切换
+  @Column({ nullable: true, default: 'agent' })
+  engine: string;
 
   @Column({ default: '15分钟' })
   timeout: string;

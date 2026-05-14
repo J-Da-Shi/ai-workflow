@@ -9,6 +9,7 @@ import { AiService } from '../ai/ai.service';
 import { WorkflowService } from '../workflow/workflow.service';
 import { AgentService, AgentSSEEvent } from '../agent/agent.service';
 import { PrdReviewService } from '../rag/prd-review.service';
+import { CodexService } from '../agent/codex.service';
 
 @Injectable()
 export class ExecutionService {
@@ -23,6 +24,8 @@ export class ExecutionService {
     private agentService: AgentService,
 
     private prdReviewService: PrdReviewService,
+
+    private codexService: CodexService,
   ) {}
 
   // 获取所有节点执行状态
@@ -229,7 +232,7 @@ export class ExecutionService {
     const git = simpleGit(workDir);
 
     // Push 到远端（用带 token 的 URL 认证）
-    const authedUrl = gitRepo.replace('http://', `http://${gitToken}@`);
+    const authedUrl = gitRepo.replace('https://', `https://${gitToken}@`);
     await git.push(authedUrl, branchName, ['--set-upstream']);
 
     // 从仓库 URL 解析 owner 和 repo
@@ -282,7 +285,8 @@ export class ExecutionService {
             source_branch: branchName,
             target_branch: baseBranch,
           }),
-        });
+        },
+      );
       const data = (await res.json()) as { web_url?: string };
       return data.web_url || '';
     }
@@ -311,7 +315,18 @@ export class ExecutionService {
       where: { workflowId, nodeKey: prevNodeKey },
     });
 
-    return execution?.output || null;
+    const raw = execution?.output || null;
+    if (!raw) return null;
+
+    // 尝试解析结构化输出，提取 .text 字段给下游
+    // 如果不是 JSON（旧数据），直接返回纯文本（向后兼容）
+    try {
+      const parsed = JSON.parse(raw) as { text?: string };
+
+      return parsed.text || raw;
+    } catch {
+      return raw;
+    }
   }
 
   // 执行单个节点
@@ -395,17 +410,41 @@ export class ExecutionService {
         const snapshot = this.scanDirectory(workDir);
         execution.snapshot = snapshot;
         await this.executionRepo.save(execution);
-        // 调用 Agent Loop
-        const agentResult = await this.agentService.runAgent(
-          workflowId,
-          nodeKey,
-          systemPrompt,
-          task,
-          onEvent, // ← 传递 SSE 回调，不传时 runAgent 内部 onEvent?.() 不触发
-        );
+        // 根据执行引擎选择路径
+        // engine = 'codex' -> 调 Codex CLI（内置工具，生产级）
+        // engine = 'agent' 或未配置 -> 走自研 Agent Loop（可控，可切模型）
+        let agentResult: { reply: string; logs: any[] };
+        fs.mkdirSync(workDir, { recursive: true });
+        if (nodeConfig.engine === 'codex') {
+          // Codex 引擎
+          const codexResult = await this.codexService.run(
+            workDir,
+            task,
+            systemPrompt,
+            onEvent,
+          );
 
-        // Agent 的最终回复作为 output
-        execution.output = agentResult.reply;
+          if (codexResult.fallback) {
+            agentResult = await this.agentService.runAgent(
+              workflowId,
+              nodeKey,
+              systemPrompt,
+              task,
+              onEvent,
+            );
+          } else {
+            agentResult = { reply: codexResult.result, logs: [] };
+          }
+        } else {
+          // 调用 Agent Loop
+          agentResult = await this.agentService.runAgent(
+            workflowId,
+            nodeKey,
+            systemPrompt,
+            task,
+            onEvent, // ← 传递 SSE 回调，不传时 runAgent 内部 onEvent?.() 不触发
+          );
+        }
 
         // 生成摘要
         execution.summary = await this.aiService.callAI(
@@ -417,6 +456,15 @@ export class ExecutionService {
         const currentFiles = this.scanDirectory(workDir);
         const changes = this.generateChanges(snapshot, currentFiles);
         execution.changes = changes;
+
+        // 构造结构化输出（下游节点和前端都能解析）
+        const codeDevOutput = {
+          type: 'code_dev', // 节点类型标识
+          text: agentResult.reply, // AI 最终回复（自然语言总结）
+          changedFiles: changes.map((c) => c.file), // 变更文件列表
+          gitBranch: gitBranch || undefined, // Git 分支名
+        };
+        execution.output = JSON.stringify(codeDevOutput);
 
         // Git 本地提交：Agent 写完文件后 commit（不进行 push）
         if (gitBranch) {
@@ -445,8 +493,19 @@ export class ExecutionService {
           systemPrompt,
         );
 
+        const prdOutput = {
+          type: 'prd_review',
+          text: reviewResult.output,
+          verdict: reviewResult.output.includes('不通过')
+            ? 'fail'
+            : reviewResult.output.includes('有条件通过')
+              ? 'conditional'
+              : 'pass',
+          ragSources: nodeConfig.knowledgeBaseIds?.length || 0, // 检索了几个知识库
+        };
+
         // 3. 保存结果
-        execution.output = reviewResult.output;
+        execution.output = JSON.stringify(prdOutput);
         execution.summary = reviewResult.summary;
         execution.status = 'waiting';
         await this.executionRepo.save(execution);
@@ -477,7 +536,11 @@ export class ExecutionService {
           '请总结一下内容的核心产出：',
           [{ role: 'user', content: result }],
         );
-        execution.output = result;
+        const defaultOutput = {
+          type: 'requirement', // 通用节点类型标识
+          text: result, // AI 生成的内容全文
+        };
+        execution.output = JSON.stringify(defaultOutput);
         execution.summary = summary;
         execution.status = 'waiting';
         await this.executionRepo.save(execution);
@@ -555,7 +618,11 @@ export class ExecutionService {
         } catch (err: unknown) {
           // Git push / PR 失败不会阻断审批，记录错误
           const errMsg = err instanceof Error ? err.message : 'PR 创建失败';
-          execution.error = errMsg;
+          execution.error = JSON.stringify({
+            stage: 'git_pr',
+            message: errMsg,
+            branch: execution.gitBranch,
+          });
         }
       }
     }

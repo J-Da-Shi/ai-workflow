@@ -49,20 +49,42 @@ export default function NodeRun({ workflowId, nodeKey, onExecute, executing }: N
   const [selectedFile, setSelectedFile] = useState<string | null>(null);
   const [diffLoading, setDiffLoading] = useState(false);
 
-  // 加载历史日志
+  // 加载历史日志 + 轮询（工作流批量执行时没有 SSE，靠轮询刷新）
   useEffect(() => {
     const fetchLogs = async () => {
-      setLoading(true);
       try {
         const res = await getAgentLogs(workflowId, nodeKey);
-        setLogs(Array.isArray(res) ? res : (res as any).data || []);
+        const data = Array.isArray(res) ? res : (res as any).data || [];
+        setLogs(data);
+        return data;
       } catch {
         setLogs([]);
-      } finally {
-        setLoading(false);
+        return [];
       }
     };
-    fetchLogs();
+
+    // 首次加载
+    setLoading(true);
+    fetchLogs().finally(() => setLoading(false));
+
+    // 轮询：每 3 秒刷新一次，直到有数据且不再增长
+    let prevCount = 0;
+    let stableCount = 0;
+    const timer = setInterval(async () => {
+      const data = await fetchLogs();
+      if (data.length === prevCount) {
+        stableCount++;
+      } else {
+        stableCount = 0;
+        prevCount = data.length;
+      }
+      // 连续 5 次无变化（15 秒）停止轮询
+      if (stableCount >= 5) {
+        clearInterval(timer);
+      }
+    }, 3000);
+
+    return () => clearInterval(timer);
   }, [workflowId, nodeKey]);
 
   // 监听 SSE 实时事件
